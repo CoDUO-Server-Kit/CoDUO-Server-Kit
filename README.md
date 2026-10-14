@@ -4,6 +4,8 @@
 
 > 📖 **Full guide (Spanish):** [docs/GUIA.md](docs/GUIA.md) · License: [GPL v3](LICENSE) · Credits: [CREDITS.md](CREDITS.md)
 
+**Created by Leandro Guzman** together with a group of tech-hobbyist Call of Duty friends — **GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro and Sr-Oscuro** — in our free time, over Zoom calls while we played.
+
 ![Launcher](imagenes/launcher.png)
 
 ## What it does

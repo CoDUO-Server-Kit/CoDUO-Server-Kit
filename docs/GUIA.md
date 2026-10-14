@@ -2,6 +2,8 @@
 
 Esta guía explica, paso a paso, cómo montar **tu propio servidor de Call of Duty: United Offensive 1.51** con un mod, y cómo usar este kit para que tus jugadores tengan **siempre los mismos archivos** sin descargas dentro del juego, con un **launcher** que se actualiza solo, **práctica con bots**, **top del mes** y más.
 
+Creado por **Leandro Guzman** en colaboración con un grupo de técnicos aficionados al CoD — **GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro y Sr-Oscuro** — en nuestro tiempo libre, en charlas de Zoom mientras jugábamos.
+
 > **Importante:** este proyecto **no incluye** el juego, ni mods, ni mapas, ni el motor HD. Cada comunidad pone los suyos. Solo se publica el código propio del kit (licencia GPL v3).
 
 ---

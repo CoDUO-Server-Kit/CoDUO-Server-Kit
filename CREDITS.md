@@ -1,5 +1,15 @@
 # Créditos / Credits
 
+## Autores de CoDUO Server Kit
+
+Creado por **Leandro Guzman**, en colaboración con un grupo de técnicos aficionados al Call of Duty:
+**GERARD!**, **Gaston**, **Miguel Soldier**, **Guille**, **Jubilado**, **Pyro** y **Sr-Oscuro**.
+Lo hicimos en nuestro tiempo libre, en charlas de Zoom mientras jugábamos.
+
+*Created by **Leandro Guzman** with a group of tech-hobbyist Call of Duty friends — GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro and Sr-Oscuro — in our free time, over Zoom calls while we played.*
+
+---
+
 Este kit existe gracias al trabajo de muchas personas de la comunidad de Call of Duty. **Nada de su contenido está incluido en este repositorio**: acá solo se publica el código propio del kit. Si usás sus mods o mapas, conseguilos de sus autores y respetá sus condiciones.
 
 *This kit exists thanks to many people from the Call of Duty community. None of their content is included in this repository; only the kit's own code is published.*
@@ -53,4 +63,4 @@ Ravir (morteros, hitblip, cvardef, primeros auxilios, herramientas de admin) · 
 
 ## Este kit
 
-Código del launcher, herramientas de publicación, red de caminos automática de los bots, top del mes y la guía: contribuidores de **CoDUO Server Kit**, bajo licencia **GPL v3**.
+Código del launcher, herramientas de publicación, red de caminos automática de los bots, top del mes y la guía: **Leandro Guzman** y el grupo (ver arriba), bajo licencia **GPL v3**. Las contribuciones de la comunidad son bienvenidas.
