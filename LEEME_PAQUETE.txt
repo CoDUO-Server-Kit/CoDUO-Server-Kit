@@ -43,10 +43,17 @@ PROBLEMAS COMUNES
 - Pantalla muy blanca despues de cerrar el juego: el launcher la restaura al cerrar.
 - El mouse no responde en la practica: hace clic una vez en la ventana del juego.
 
-ARMAR TU PROPIO SERVIDOR
-------------------------
-Este paquete es para jugar. Para montar un servidor con actualizaciones automaticas
-para tu comunidad, segui la guia del proyecto (docs/GUIA.md en GitHub).
+USARLO CON UN SERVIDOR
+----------------------
+Opcion 1 - Servidor con este mismo paquete (sin actualizaciones automaticas):
+  - Segui Servidor\LEEME_SERVIDOR.txt (subir CoDUOKit al servidor Linux, server.cfg, etc.).
+  - Cada jugador abre Launcher\config.json con el Bloc de notas y pone la IP:
+        "server": "IP_DEL_SERVIDOR:28960",
+    Al abrir el launcher aparece el boton ENTRAR AL SERVIDOR.
+Opcion 2 - Con actualizaciones automaticas (el launcher baja solo cada cambio):
+  - Hace falta un repositorio privado en GitHub y dos tokens. Completas en config.json
+    "owner", "repo" y "token", y publicas con la herramienta del proyecto.
+  - Guia paso a paso: docs/GUIA.md en GitHub (pasos 3 a 5).
 
 CREDITOS Y AVISO
 ----------------
