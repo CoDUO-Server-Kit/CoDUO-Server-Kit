@@ -305,6 +305,8 @@ namespace CoDUOKit
             // nombre de la comunidad desde config.json (si esta)
             if (!string.IsNullOrEmpty(cfg.title)) { Text = cfg.title + " - Launcher"; lblTitle.Text = cfg.title + "!"; Invalidate(true); }
             if (!string.IsNullOrEmpty(cfg.subtitle)) lblSub.Text = cfg.subtitle;
+            // sin servidor configurado (paquete para jugar offline): no mostrar "ENTRAR AL SERVIDOR"
+            if (string.IsNullOrEmpty(cfg.server)) btnServer.Visible = false;
 
             if (!File.Exists(Path.Combine(Paths.GameDir, cfg.gameExe)))
             {
@@ -542,6 +544,13 @@ namespace CoDUOKit
         void StartVerify()
         {
             if (busy) return;
+            // modo sin actualizaciones (paquete offline): sin repo configurado no se intenta GitHub
+            if (cfg == null || string.IsNullOrEmpty(cfg.owner) || string.IsNullOrEmpty(cfg.repo))
+            {
+                Log("Modo sin actualizaciones: no hay repositorio configurado en config.json.");
+                Status("Listo para jugar (sin actualizaciones automaticas).", 100);
+                return;
+            }
             SetBusy(true);
             var th = new Thread(() =>
             {

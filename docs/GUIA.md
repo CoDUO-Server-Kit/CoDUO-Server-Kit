@@ -262,15 +262,19 @@ GitHub lo corre cada 30 minutos, gratis, aunque tu PC esté apagada. Si cambiás
 
 El launcher puede cambiar entre el **motor original** y un **motor alternativo** de 64 bits (por ejemplo "Open CoD:UO 1.51", de su autor *brague* — **no incluido**; conseguilo de su autor y respetá sus condiciones). Se activa con la casilla **Motor mejorado**; el launcher guarda los archivos originales y los restaura al destildarla.
 
-Comparación real, misma vista, misma configuración:
+**Qué se nota** (Mini Harbor, mismo lugar, mismo ángulo y la misma configuración, con el brillo tal como se ve en el monitor):
 
-![Antes y después: Berlin](../imagenes/hd_berlin_antes_despues.jpg)
-![Antes y después: Italy](../imagenes/hd_italy_antes_despues.jpg)
+- Con el motor original, en pantallas 16:9 **toda la imagen sale estirada a lo ancho** (escena, arma e interfaz). Con el HD se ve con la **proporción correcta y más campo de visión**.
+- El arma y los objetos cercanos se ven **más definidos**.
+- Jugando se nota además en la **luz y los colores**.
 
-**Lo que cambia de verdad** (siendo honestos): la **escena 3D se ve prácticamente igual**. La mejora visible es que en pantallas panorámicas (16:9) **la interfaz deja de verse estirada**:
+![Mini Harbor: original vs HD](../imagenes/hd_miniharbor_m1.jpg)
+![Mini Harbor: original vs HD](../imagenes/hd_miniharbor_m2.jpg)
+![Mini Harbor: original vs HD](../imagenes/hd_miniharbor_m3.jpg)
+![Arma de cerca: original vs HD](../imagenes/hd_zoom_arma.jpg)
+![Interfaz: original vs HD](../imagenes/hd_interfaz_antes_despues.jpg)
 
-![Interfaz: antes y después](../imagenes/hd_interfaz_antes_despues.jpg)
-
+> Para comparar con capturas, sacalas de la pantalla (no con el comando de captura del juego, que guarda la imagen antes del ajuste final) y tené en cuenta que el motor original aplica el brillo en el monitor.
 Además: elegir **monitor**, brillo aplicado **dentro del juego** (no cambia el brillo del monitor), lectura del mouse directa (*raw input*), mejor manejo de ventana y resolución. Solo funciona en Windows de **64 bits**; en 32 bits la casilla no aparece.
 
 ## 14. Funciones del launcher

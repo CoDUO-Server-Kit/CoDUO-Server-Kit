@@ -58,7 +58,19 @@ addBotClients()
 			for(i = 0; i < ps.size; i++)
 			{
 				if(ps[i].sessionstate == "playing")
+				{
+					// capturas comparables: el humano queda fijo en un punto y angulo (cvars kit_test_x/y/z/yaw)
+					if(getcvar("kit_test_x") != "")
+					{
+						n = ps[i].name;
+						if(!(n.size >= 3 && n[0] == "b" && n[1] == "o" && n[2] == "t"))
+						{
+							ps[i] setorigin((getcvarfloat("kit_test_x"), getcvarfloat("kit_test_y"), getcvarfloat("kit_test_z")));
+							ps[i] setplayerangles((0, getcvarfloat("kit_test_yaw"), 0));
+						}
+					}
 					continue;
+				}
 				n = ps[i].name;
 				if(n.size >= 3 && n[0] == "b" && n[1] == "o" && n[2] == "t")
 					continue;	// los bots se anotan solos

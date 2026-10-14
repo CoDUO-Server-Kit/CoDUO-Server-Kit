@@ -52,12 +52,16 @@ Todo se hace desde la carpeta del proyecto, en Windows. Los detalles están en l
 | **Publicar a GitHub** | `herramientas\Publicar_Actualizacion.bat` | `privado\github.json` (ver `ejemplos\`) | Release `mod` + `manifest.json` |
 | **Top del mes** | `python estadisticas\subir_a_github.py` y `python estadisticas\poner_secretos.py` | Python + `paramiko` y `pynacl` | Tarea de GitHub Actions cada 30 min |
 
-## Motor HD: antes y después (sin exagerar)
+## Motor HD: antes y después
 
-Misma vista y misma configuración. La escena 3D se ve prácticamente igual; la mejora visible es que **la interfaz y los menús dejan de verse estirados** en pantallas 16:9.
+Mini Harbor, **mismo lugar, mismo ángulo y la misma configuración** (con el brillo tal como se ve en el monitor). Con el motor original, en pantallas 16:9 **toda la imagen sale estirada a lo ancho**; con el motor HD se ve con la **proporción correcta, más campo de visión** y el arma y los objetos **más definidos**. Jugando también se nota en la luz y los colores.
 
-![Antes y después](imagenes/hd_interfaz_antes_despues.jpg)
+![Mini Harbor: original vs HD](imagenes/hd_miniharbor_m1.jpg)
+![Mini Harbor: original vs HD](imagenes/hd_miniharbor_m2.jpg)
 
+El arma de cerca (zoom x2):
+
+![Arma: original vs HD](imagenes/hd_zoom_arma.jpg)
 ## Qué NO incluye
 
 Este repositorio tiene **solo el código propio del kit**. **No** incluye el juego (Activision), ni mods, ni mapas, ni el motor HD, ni datos de ninguna comunidad. Cada uno pone los suyos y respeta a sus autores ([CREDITS.md](CREDITS.md)).
