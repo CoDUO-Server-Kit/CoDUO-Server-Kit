@@ -9,6 +9,7 @@ $fuera = 'rconpassword|rcon_password|sv_master|^\s*sets\s|sv_hostname|g_password
          'sv_dl_|sv_punkbuster|sv_maxclients|sv_maxping|sv_minping|sv_maxrate|sv_minrate|g_inactivity|sv_timeout|sv_gamespy|sv_reconnect|' +
          'sv_floodprotect|exec\s+"?awe\.cfg|sv_mapRotation|g_gametype|g_log|com_hunkmegs|pb_sv|^\s*WAIT'
 
+New-Item -ItemType Directory -Force (Split-Path $out) | Out-Null
 $lines = @(
     '// PRACTICA LOCAL - generado automaticamente desde la config del server (no editar a mano)'
     "// Generado: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"

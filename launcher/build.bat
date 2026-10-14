@@ -2,6 +2,9 @@
 rem Compila CoDUOKitLauncher.exe con el compilador de .NET Framework 4.8 que trae Windows.
 cd /d "%~dp0"
 set CSC=%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe
+rem Windows de 32 bits: no tiene Framework64
+if not exist "%CSC%" set CSC=%WINDIR%\Microsoft.NET\Framework\v4.0.30319\csc.exe
+if not exist "%CSC%" (echo No encuentro el compilador de .NET 4 ^(csc.exe^). Instala .NET Framework 4.8. & exit /b 1)
 set ICON=
 if exist "..\..\Call of Duty Deluxe Edition\united_offensive.ico" set ICON=/win32icon:"..\..\Call of Duty Deluxe Edition\united_offensive.ico"
 "%CSC%" /nologo /nowarn:649 /target:winexe /optimize+ /out:CoDUOKitLauncher.exe %ICON% ^

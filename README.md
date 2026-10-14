@@ -1,46 +1,80 @@
 # CoDUO Server Kit
 
-**A complete toolkit to run a private Call of Duty: United Offensive 1.51 community server with a custom mod** — a self-updating launcher for your players, bot practice on any map, a monthly leaderboard and the publishing tools behind it.
+**Kit completo para montar el servidor privado de tu comunidad de Call of Duty: United Offensive 1.51 con un mod propio**: un launcher que se actualiza solo para tus jugadores, práctica con bots en cualquier mapa, un top del mes y las herramientas para publicar todo.
 
-> 📖 **Full guide (Spanish):** [docs/GUIA.md](docs/GUIA.md) · License: [GPL v3](LICENSE) · Credits: [CREDITS.md](CREDITS.md)
+> 📖 **Guía completa paso a paso:** [docs/GUIA.md](docs/GUIA.md) · Licencia: [GPL v3](LICENSE) · Créditos: [CREDITS.md](CREDITS.md) · *English summary at the end*
 
-**Created by Leandro Guzman** together with a group of tech-hobbyist Call of Duty friends — **GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro and Sr-Oscuro** — in our free time, over Zoom calls while we played.
+**Creado por Leandro Guzman** en colaboración con un grupo de técnicos aficionados al CoD — **GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro y Sr-Oscuro** — en nuestro tiempo libre, en charlas de Zoom mientras jugábamos.
 
 ![Launcher](imagenes/launcher.png)
 
-## What it does
+## Qué hace
 
-- **Self-updating launcher (C#, .NET 4, runs on Windows 7+)** — compares every mod file against a SHA-256 manifest and downloads only what changed from a **private GitHub release**. It updates itself, too.
-- **Locked-down server** — `sv_pure 1` with in-game downloads disabled: only players with your exact pk3 files can join, and those files are never public.
-- **Bot practice on any map** — a hidden local dedicated server with bots that **build their own navigation graph** for every map at load time (no hand-made waypoints), move smoothly and play real walking animations (ideas from MeatBot).
-- **Monthly leaderboard** — a GitHub Actions job reads the server's `games_mp.log` every 30 minutes; the launcher shows top kills and match wins, reset every month.
-- **One-click repair** — fixes the classic UO breakages: `EXE_...` strings (language reset), the "Safe Mode" prompt, slow map loads (vsync), white screen (gamma), stuck mouse focus.
-- **Optional HD engine switch** — toggles between the stock engine and a 64-bit community engine (not included), keeping a backup of the originals.
-- **Tools** — pk3 builder, pk3 priority/conflict auditor, release publisher, patcher for old launchers.
+- **Launcher que se actualiza solo** (C#, .NET 4, anda desde Windows 7): compara cada archivo del mod con una lista de huellas (SHA-256) y baja **solo lo que cambió** desde un **release privado de GitHub**. También se actualiza a sí mismo.
+- **Servidor cerrado**: `sv_pure 1` y descargas del juego apagadas. Solo entra quien tiene tus pk3 **idénticos**, y esos archivos nunca son públicos.
+- **Práctica con bots en cualquier mapa**: un servidor local oculto con bots que **arman solos la red de caminos** de cada mapa al cargarlo (sin grabar recorridos a mano), se mueven suave y tienen animación de caminar (ideas de MeatBot).
+- **Top del mes**: una tarea de GitHub Actions lee cada 30 minutos el registro de partidas del servidor; el launcher muestra quién hizo más bajas y ganó más partidas, y se reinicia cada mes.
+- **Botón Reparar** y arreglos automáticos de los problemas clásicos de UO: textos `EXE_...` (idioma), cartel de "Modo Seguro", cargas lentas (sincronización vertical), monitor blanco (brillo), mouse sin foco.
+- **Motor HD opcional**: cambia entre el motor original y un motor alternativo de 64 bits (no incluido), guardando copia de los originales.
+- **Herramientas**: armado de pk3, auditoría de conflictos entre pk3, publicador de releases y un parche para launchers viejos.
 
-| Monthly leaderboard | Bot practice |
+| Top del mes | Práctica con bots |
 |---|---|
-| ![Top](imagenes/top_del_mes.png) | ![Practice](imagenes/practica.png) |
+| ![Top](imagenes/top_del_mes.png) | ![Práctica](imagenes/practica.png) |
 
-![How it works](imagenes/arquitectura.svg)
+![Cómo funciona](imagenes/arquitectura.svg)
 
-## HD engine: honest before/after
+## Requisitos
 
-Same view, same settings. The 3D scene is practically identical; the visible fix is that the **HUD and menus are no longer stretched** on 16:9 screens.
+| Para | Qué necesitás |
+|---|---|
+| **El juego** | Call of Duty + United Offensive **1.51** (copia original; el kit no lo incluye) |
+| **El servidor** | Servidor dedicado de CoD UO **1.51 para Linux** (por ejemplo con panel TCAdmin), acceso **SFTP**, y `game.mp.uo.i386.so` dentro de la carpeta del mod |
+| **El mod** | Un mod tuyo en pk3. Los arreglos (`Armar_Pk3.py fixes`) y los bots de práctica requieren un mod basado en **AWE 2.x para UO** |
+| **PC del administrador** | Windows 7 SP1 o superior · **.NET Framework 4.8** (trae el compilador `csc.exe`: **no hace falta Visual Studio**) · **PowerShell 5.1** (viene con Windows) · **Python 3.8+** · Git (opcional) |
+| **Paquetes de Python** | `pip install paramiko pynacl` (solo para el top del mes) |
+| **GitHub** | Cuenta gratis, un **repositorio privado** para tus archivos y dos tokens *fine-grained* (lectura para el launcher, escritura para vos) |
+| **Jugadores** | El juego instalado y Windows 7 SP1+ con .NET 4.5 o superior (4.8 recomendado) |
 
-![Before/after](imagenes/hd_interfaz_antes_despues.jpg)
+## Cómo se compila y arma cada pieza
 
-## Not included
+Todo se hace desde la carpeta del proyecto, en Windows. Los detalles están en la [guía](docs/GUIA.md#19-compilar-y-armar-cada-pieza).
 
-This repository contains **only the kit's own code**. It does **not** include the game (Activision), any mod, maps, the HD engine or any community's data. Bring your own, and respect their authors.
+| Pieza | Comando | Necesita | Genera |
+|---|---|---|---|
+| **Launcher** | `launcher\build.bat` | .NET 4.8 | `launcher\CoDUOKitLauncher.exe` (+ `config.json` al lado, ver `ejemplos\`) |
+| **Parche** | `parche\build_parche.bat` | El launcher compilado antes | `Output\Parche_Launcher_CoDUOKit.exe` (lleva el launcher adentro) |
+| **pk3 de arreglos** | `python herramientas\Armar_Pk3.py fixes` | El pk3 de tu mod (AWE) en `maestro\MiMod\` | `maestro\MiMod\zzzzzz_kit_fixes.pk3` (va al servidor y a los jugadores) |
+| **pk3 de armas** | `python herramientas\Armar_Pk3.py armas` | Tus archivos en `armas_src\weapons\mp\` | `maestro\MiMod\z_zzz_kit_armas.pk3` (servidor y jugadores) |
+| **pk3 de práctica (bots)** | `python herramientas\Armar_Pk3.py practica` | El pk3 de arreglos armado antes + el juego instalado | `maestro\MiMod\zzzzzz_kit_practica.pk3` (solo jugadores) |
+| **Config de la práctica** | `powershell -File herramientas\Generar_Practica_cfg.ps1` | `servidor\MiMod\server.cfg` y `awe.cfg` | `maestro\MiMod\practica.cfg` |
+| **Auditoría de conflictos** | `python herramientas\Auditar_Conflictos.py` | Los pk3 en `maestro\MiMod\` | Informe (tiene que dar `total: 0`) |
+| **Publicar a GitHub** | `herramientas\Publicar_Actualizacion.bat` | `privado\github.json` (ver `ejemplos\`) | Release `mod` + `manifest.json` |
+| **Top del mes** | `python estadisticas\subir_a_github.py` y `python estadisticas\poner_secretos.py` | Python + `paramiko` y `pynacl` | Tarea de GitHub Actions cada 30 min |
 
-## Quick start
+## Motor HD: antes y después (sin exagerar)
 
-1. Set up your Linux server with your mod folder, `sv_pure 1` and downloads off ([guide §5](docs/GUIA.md#5-paso-1--el-servidor-linux--tcadmin)).
-2. Create a **private** GitHub repo and two fine-grained tokens (read-only for the launcher, read/write for you) ([§7](docs/GUIA.md#7-paso-3--github-repo-privado-tokens-y-release)).
-3. Build the launcher with `launcher\build.bat` (no Visual Studio needed) and fill `config.json` ([§8](docs/GUIA.md#8-paso-4--compilar-y-configurar-el-launcher)).
-4. Put your files in `maestro\` and run `herramientas\Publicar_Actualizacion.bat` ([§9](docs/GUIA.md#9-paso-5--publicar-actualizaciones)).
+Misma vista y misma configuración. La escena 3D se ve prácticamente igual; la mejora visible es que **la interfaz y los menús dejan de verse estirados** en pantallas 16:9.
 
-## License
+![Antes y después](imagenes/hd_interfaz_antes_despues.jpg)
 
-GPL v3 — see [LICENSE](LICENSE). Parts derived from other mods (AWE bot script) keep their authors' rights — see [CREDITS.md](CREDITS.md).
+## Qué NO incluye
+
+Este repositorio tiene **solo el código propio del kit**. **No** incluye el juego (Activision), ni mods, ni mapas, ni el motor HD, ni datos de ninguna comunidad. Cada uno pone los suyos y respeta a sus autores ([CREDITS.md](CREDITS.md)).
+
+## Inicio rápido
+
+1. Montá el servidor Linux con la carpeta de tu mod, `sv_pure 1` y descargas apagadas ([guía §5](docs/GUIA.md#5-paso-1--el-servidor-linux--tcadmin)).
+2. Creá un repo **privado** en GitHub y dos tokens *fine-grained* ([§7](docs/GUIA.md#7-paso-3--github-repo-privado-tokens-y-release)).
+3. Compilá el launcher con `launcher\build.bat` y completá su `config.json` ([§8](docs/GUIA.md#8-paso-4--compilar-y-configurar-el-launcher)).
+4. Poné tus archivos en `maestro\` y corré `herramientas\Publicar_Actualizacion.bat` ([§9](docs/GUIA.md#9-paso-5--publicar-actualizaciones)).
+
+## Licencia
+
+GPL v3 — ver [LICENSE](LICENSE). Las partes derivadas de otros mods (el script de bots de AWE) mantienen los derechos de sus autores — ver [CREDITS.md](CREDITS.md).
+
+---
+
+## English summary
+
+**CoDUO Server Kit** is a complete toolkit to run a private Call of Duty: United Offensive 1.51 community server with a custom mod: a self-updating launcher (C#, .NET 4, Windows 7+) that syncs your mod from a private GitHub release using a SHA-256 manifest; a locked-down server (`sv_pure 1`, downloads off); bot practice on any map with bots that build their own navigation graph at load time; a monthly leaderboard updated by GitHub Actions; one-click repair of classic UO issues; an optional HD-engine switch; and the publishing tools behind it. Requirements and build steps are in the tables above; the full guide is in Spanish ([docs/GUIA.md](docs/GUIA.md)). Created by **Leandro Guzman** with GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro and Sr-Oscuro. It contains only the kit's own code (GPL v3) — no game files, mods, maps or engine.

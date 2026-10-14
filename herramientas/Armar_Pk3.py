@@ -30,6 +30,7 @@ if que not in ("fixes", "practica", "armas"):
 
 
 def armar(out, carpeta, extra=None):
+    os.makedirs(os.path.dirname(out), exist_ok=True)
     tmp = out + ".tmp"
     with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
         for nombre, datos in (extra or {}).items():

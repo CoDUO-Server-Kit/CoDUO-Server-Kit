@@ -28,6 +28,7 @@ Creado por **Leandro Guzman** en colaboración con un grupo de técnicos aficion
 16. [Problemas conocidos y soluciones](#16-problemas-conocidos-y-soluciones)
 17. [Seguridad](#17-seguridad)
 18. [Tareas comunes](#18-tareas-comunes)
+19. [Compilar y armar cada pieza](#19-compilar-y-armar-cada-pieza)
 
 ---
 
@@ -58,18 +59,34 @@ Un servidor de CoD UO con mod y mapas propios tiene siempre los mismos problemas
 
 ## 3. Requisitos
 
-**Para el administrador (Windows):**
-- Call of Duty + United Offensive **1.51** instalado.
-- **.NET Framework 4.x** (viene con Windows 8/10/11; en Windows 7 instalar 4.8 — ver [problemas](#16-problemas-conocidos-y-soluciones)). Se compila con el `csc.exe` que trae Windows, **sin Visual Studio**.
-- **Python 3** (para las herramientas) y `pip install paramiko pynacl` (para el top del mes).
-- PowerShell 5 (viene con Windows).
-- Una cuenta de **GitHub** (gratis).
+**El juego**
+- Call of Duty + United Offensive actualizado a **1.51** (copia original). El kit no incluye archivos del juego.
 
-**Para el servidor:**
-- Servidor dedicado de CoD UO **1.51 para Linux** (por ejemplo un servicio con panel TCAdmin) con acceso **SFTP**.
+**El servidor**
+- Servidor dedicado de CoD UO **1.51 para Linux** (por ejemplo un servicio con panel TCAdmin).
+- Acceso **SFTP** (para subir los pk3 y para que el top del mes lea el registro de partidas).
+- `game.mp.uo.i386.so` (módulo de juego Linux, viene con el servidor 1.51) **dentro de la carpeta del mod**.
 
-**Para los jugadores:**
-- El juego instalado (CoD + UO 1.51), Windows 7 SP1 o superior con .NET 4.5+.
+**El mod**
+- Tu mod en uno o más pk3. Los arreglos (`Armar_Pk3.py fixes`) y los bots de práctica están hechos para mods basados en **AWE 2.x para UO** (la mayoría de los mods populares de UO lo son). El resto del kit (launcher, publicación, top) sirve con cualquier mod.
+
+**PC del administrador (Windows)**
+
+| Programa | Versión | Para qué | Dónde se consigue |
+|---|---|---|---|
+| Windows | 7 SP1 o superior | Todo | — |
+| .NET Framework | **4.8** | Compilar y usar el launcher (trae `csc.exe`; **no hace falta Visual Studio**) | Viene con Windows 10/11; para 7/8 se baja de Microsoft |
+| PowerShell | 5.1 | Publicar y generar la config de práctica | Viene con Windows 10/11 (WMF 5.1 para 7) |
+| Python | 3.8 o superior | Armar pk3, auditar conflictos, top del mes | python.org (marcar "Add to PATH") |
+| Paquetes de Python | `paramiko`, `pynacl` | Solo el top del mes (SFTP y secretos de GitHub) | `pip install paramiko pynacl` |
+| Git | cualquiera | Opcional, para versionar tu copia | git-scm.com |
+| Cliente SFTP | FileZilla, WinSCP… | Subir archivos al servidor | — |
+
+**GitHub**
+- Cuenta gratis, un **repositorio privado** para tus archivos y dos tokens *fine-grained* (ver [paso 3](#7-paso-3--github-repo-privado-tokens-y-release)).
+
+**Jugadores**
+- El juego instalado, Windows 7 SP1 o superior con .NET 4.5+ (4.8 recomendado). En Windows 7 puede hacer falta instalar certificados (ver [problemas](#16-problemas-conocidos-y-soluciones)).
 
 ## 4. Estructura de carpetas
 
@@ -319,3 +336,110 @@ Diseño: ventanas sin la barra de Windows, bordes redondeados, botones redondead
 | Agregar un mapa | Copiar el pk3 a `maestro\MiMod` y al servidor → `Auditar_Conflictos.py` (total 0) → reiniciar → publicar |
 | Actualizar el launcher | `launcher\build.bat` → copiar a `maestro\Launcher\CoDUOKitLauncher.exe.nuevo` → publicar |
 | Cambiar el anti-camper | En `awe.cfg`: `awe_anticamp_time` (segundos quieto) y `awe_anticamp_marktime` (duración de la marca) |
+
+## 19. Compilar y armar cada pieza
+
+Todo se hace en Windows, desde la carpeta del proyecto (abrí una consola ahí: en el Explorador, escribí `cmd` en la barra de dirección). **Orden recomendado la primera vez:** launcher → parche → pk3 de arreglos → pk3 de armas → pk3 de práctica → config de práctica → auditoría → publicar → top del mes.
+
+### 19.1 Launcher
+
+```
+launcher\build.bat
+```
+
+- **Necesita:** .NET Framework 4.8. El script busca solo el compilador (`csc.exe`) de 64 o 32 bits.
+- **Genera:** `launcher\CoDUOKitLauncher.exe` (un solo exe, sin dependencias).
+- **Para usarlo:** copialo a `<carpeta del juego>\Launcher\` junto con un `config.json` (partí de `ejemplos\config.example.json`).
+- **Ícono (opcional):** si querés un ícono, agregá `/win32icon:mi_icono.ico` a la línea de `csc` en `build.bat`.
+- **Para que se actualice solo en los jugadores:** copialo a `maestro\Launcher\CoDUOKitLauncher.exe.nuevo` y publicá (ver 19.8).
+
+### 19.2 Parche (instalar o reemplazar el launcher)
+
+```
+parche\build_parche.bat
+```
+
+- **Necesita:** el launcher compilado antes (19.1). El parche lo lleva adentro.
+- **Genera:** `Output\Parche_Launcher_CoDUOKit.exe`.
+- **Qué hace al ejecutarlo:** busca la carpeta del juego (registro de Windows, o "Buscar..."), cierra el launcher si está abierto y pone el nuevo. Pide permisos de administrador solo si la carpeta lo requiere.
+- **Ojo:** el parche no trae `config.json`. Sirve para actualizar launchers que ya tienen uno, o lo repartís junto.
+
+### 19.3 pk3 de arreglos (servidor y jugadores)
+
+```
+python herramientas\Armar_Pk3.py fixes
+```
+
+- **Necesita:** el pk3 de tu mod (basado en AWE) en `maestro\MiMod\`. Editá al principio de `Armar_Pk3.py` el nombre del pk3 (`MOD`) y la carpeta del juego (`JUEGO`).
+- **Toma:** el `_awe.gsc` de tu mod y le aplica arreglos (la estrella del anti-camper que quedaba para siempre, mensajes en español, vida configurable con `kit_player_health`). También mete todo lo que pongas en `fixes_src\` (scripts propios, por ejemplo `fixes_src\maps\mp\...`).
+- **Genera:** `maestro\MiMod\zzzzzz_kit_fixes.pk3`.
+- **Después:** subilo al servidor, reiniciá y probá con `rcon map_restart`. Un error de script en Linux tira el servidor.
+- Si tu versión de AWE es distinta, puede que algún arreglo no encuentre el texto a reemplazar: el script avisa con `esperaba 1 coincidencia(s)` y no genera nada. Ajustá o comentá ese arreglo.
+
+### 19.4 pk3 de armas (servidor y jugadores)
+
+```
+python herramientas\Armar_Pk3.py armas
+```
+
+- **Necesita:** los archivos de armas que quieras cambiar en `armas_src\weapons\mp\` (copialos del pk3 del mod con 7-Zip y editalos con un editor de texto: son texto plano con pares `clave\valor`).
+- **Genera:** `maestro\MiMod\z_zzz_kit_armas.pk3`. El nombre empieza con `z_zzz_` para **ganarle a todos** los demás pk3 (ver [reglas](#15-reglas-del-juego-que-hay-que-conocer)).
+- **Después:** subilo al servidor, reiniciá y probá en Linux con `rcon map_restart`.
+
+### 19.5 pk3 de práctica con bots (solo jugadores)
+
+```
+python herramientas\Armar_Pk3.py practica
+```
+
+- **Necesita:** el pk3 de arreglos armado antes (19.3) y el juego instalado en la carpeta `JUEGO`.
+- **Toma:** `practica_src\` (el script de bots), el `_awe.gsc` del pk3 de arreglos (le agrega el registro de las armas de los bots), las armas del mod y el `playeranim.script` original del juego.
+- **Genera:** `maestro\MiMod\zzzzzz_kit_practica.pk3`, con el script de bots, las armas especiales `bwalk_*` (para la animación de caminar) y el `playeranim.script` ampliado.
+- **No se sube al servidor:** con `sv_pure 1`, el servidor online ignora este pk3 de los jugadores.
+
+### 19.6 Configuración de la práctica
+
+```
+powershell -ExecutionPolicy Bypass -File herramientas\Generar_Practica_cfg.ps1
+```
+
+- **Necesita:** una copia de la configuración real del servidor en `servidor\MiMod\server.cfg` y `servidor\MiMod\awe.cfg`.
+- **Genera:** `maestro\MiMod\practica.cfg`: la misma configuración del servidor (armas, vida, anti-camper…) sin lo que es solo del servidor (claves, red, rotación).
+- Correlo cada vez que cambies la configuración del servidor.
+
+### 19.7 Auditoría de conflictos
+
+```
+python herramientas\Auditar_Conflictos.py
+```
+
+- **Necesita:** los pk3 en `maestro\MiMod\`. Editá en el script la lista `MOD` con los nombres de los pk3 de tu mod.
+- **Muestra:** el orden de prioridad de los pk3 y qué archivos de un pk3 de mapas **pisan** al mod. Tiene que dar `total: 0` antes de publicar.
+
+### 19.8 Publicar a GitHub
+
+```
+herramientas\Publicar_Actualizacion.bat
+```
+
+- **Necesita:** `privado\github.json` (partí de `ejemplos\github.example.json`) con el token de **escritura**.
+- **Sube:** todo lo que hay en `maestro\` (solo lo que cambió), borra del release lo que ya no está y sube el `manifest.json` al final.
+- **Opción:** `powershell -File herramientas\Publicar_Actualizacion.ps1 -Forzar` vuelve a subir todo.
+
+### 19.9 Top del mes
+
+```
+pip install paramiko pynacl
+python estadisticas\subir_a_github.py
+set SFTP_USER=usuario
+set SFTP_PASS=clave
+set SFTP_HOST=ip.del.servidor
+set SFTP_PORT=22
+set LOG_PATH=ruta/en/el/servidor/MiMod/games_mp.log
+python estadisticas\poner_secretos.py
+```
+
+- `subir_a_github.py` sube a tu repo privado el programa y la tarea programada (`.github/workflows/estadisticas.yml`). El token de escritura necesita permiso **Workflows**.
+- `poner_secretos.py` guarda la conexión SFTP como **secretos cifrados** del repo (permiso **Secrets**). Nunca quedan en el código.
+- Para probarlo a mano: con las mismas variables `set`, corré `python estadisticas\actualizar_estadisticas.py`.
+- En GitHub, pestaña **Actions** → *Estadisticas* → *Run workflow* lo corre al instante; después corre solo cada 30 minutos.
