@@ -1,0 +1,11 @@
+{
+  "owner": "TU_USUARIO",
+  "repo": "mi-mod",
+  "tag": "mod",
+  "token": "PEGAR_ACA_EL_TOKEN_DE_LECTURA",
+  "gameExe": "CoDUOMP.exe",
+  "modDir": "MiMod",
+  "server": "123.45.67.89:28960",
+  "title": "Mi Comunidad",
+  "subtitle": "Call of Duty: United Offensive  -  Mi Mod"
+}

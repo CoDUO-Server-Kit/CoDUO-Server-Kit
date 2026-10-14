@@ -1,0 +1,7 @@
+{
+  "owner": "TU_USUARIO",
+  "repo": "mi-mod",
+  "tag": "mod",
+  "write_token": "PEGAR_ACA_EL_TOKEN_DE_ESCRITURA (Contents, Secrets, Workflows: Read and write)",
+  "read_token": "PEGAR_ACA_EL_TOKEN_DE_LECTURA (Contents: Read-only)"
+}

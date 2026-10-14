@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" font-family="Segoe UI, Arial, sans-serif">
+  <rect width="960" height="520" rx="18" fill="#181a20"/>
+  <defs>
+    <marker id="f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9aa0b4"/>
+    </marker>
+  </defs>
+  <text x="480" y="44" text-anchor="middle" fill="#e8be3c" font-size="24" font-weight="bold">CoDUO Server Kit - como funciona</text>
+
+  <!-- Administrador -->
+  <rect x="40" y="90" width="250" height="150" rx="14" fill="#22252e" stroke="#5b63f1" stroke-width="2"/>
+  <text x="165" y="122" text-anchor="middle" fill="#e6e6eb" font-size="18" font-weight="bold">PC del administrador</text>
+  <text x="60" y="152" fill="#9aa0b4" font-size="14">maestro\MiMod  (pk3 del mod)</text>
+  <text x="60" y="176" fill="#9aa0b4" font-size="14">Armar_Pk3.py  (arreglos, bots)</text>
+  <text x="60" y="200" fill="#9aa0b4" font-size="14">Auditar_Conflictos.py</text>
+  <text x="60" y="224" fill="#9aa0b4" font-size="14">Publicar_Actualizacion.ps1</text>
+
+  <!-- GitHub -->
+  <rect x="355" y="90" width="250" height="150" rx="14" fill="#22252e" stroke="#e8be3c" stroke-width="2"/>
+  <text x="480" y="122" text-anchor="middle" fill="#e6e6eb" font-size="18" font-weight="bold">GitHub (repo privado)</text>
+  <text x="375" y="152" fill="#9aa0b4" font-size="14">release "mod": archivos +</text>
+  <text x="375" y="172" fill="#9aa0b4" font-size="14">  manifest.json (SHA-256)</text>
+  <text x="375" y="198" fill="#9aa0b4" font-size="14">release "stats": top del mes</text>
+  <text x="375" y="224" fill="#9aa0b4" font-size="14">Actions: cada 30 min</text>
+
+  <!-- Servidor -->
+  <rect x="670" y="90" width="250" height="150" rx="14" fill="#22252e" stroke="#d67c1e" stroke-width="2"/>
+  <text x="795" y="122" text-anchor="middle" fill="#e6e6eb" font-size="18" font-weight="bold">Servidor (Linux)</text>
+  <text x="690" y="152" fill="#9aa0b4" font-size="14">CoD UO 1.51 dedicado</text>
+  <text x="690" y="176" fill="#9aa0b4" font-size="14">fs_game MiMod, sv_pure 1</text>
+  <text x="690" y="200" fill="#9aa0b4" font-size="14">descargas apagadas</text>
+  <text x="690" y="224" fill="#9aa0b4" font-size="14">games_mp.log (bajas/ganadas)</text>
+
+  <!-- Jugadores -->
+  <rect x="200" y="330" width="560" height="150" rx="14" fill="#22252e" stroke="#2e7d50" stroke-width="2"/>
+  <text x="480" y="362" text-anchor="middle" fill="#e6e6eb" font-size="18" font-weight="bold">PC de cada jugador: CoDUOKitLauncher.exe</text>
+  <text x="225" y="392" fill="#9aa0b4" font-size="14">Verifica y baja solo lo que cambio  -  se actualiza solo</text>
+  <text x="225" y="416" fill="#9aa0b4" font-size="14">JUGAR / ENTRAR AL SERVIDOR / PRACTICA con bots / Teclas / Reparar</text>
+  <text x="225" y="440" fill="#9aa0b4" font-size="14">Resolucion, monitor, FPS, motor HD opcional  -  TOP DEL MES</text>
+  <text x="225" y="464" fill="#9aa0b4" font-size="14">Practica: servidor local oculto + bots con red de caminos automatica</text>
+
+  <!-- flechas -->
+  <line x1="290" y1="150" x2="350" y2="150" stroke="#9aa0b4" stroke-width="2" marker-end="url(#f)"/>
+  <text x="320" y="140" text-anchor="middle" fill="#9aa0b4" font-size="12">publica</text>
+  <line x1="165" y1="240" x2="700" y2="250" stroke="#9aa0b4" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#f)" opacity="0"/>
+  <path d="M165,240 C165,285 795,285 795,244" fill="none" stroke="#9aa0b4" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#f)"/>
+  <text x="480" y="300" text-anchor="middle" fill="#9aa0b4" font-size="12">sube los mismos pk3 por SFTP</text>
+  <line x1="670" y1="200" x2="610" y2="200" stroke="#9aa0b4" stroke-width="2" marker-end="url(#f)"/>
+  <text x="640" y="190" text-anchor="middle" fill="#9aa0b4" font-size="12">log</text>
+  <line x1="480" y1="240" x2="480" y2="325" stroke="#9aa0b4" stroke-width="2" marker-end="url(#f)"/>
+  <text x="492" y="316" fill="#9aa0b4" font-size="12">descarga</text>
+  <line x1="700" y1="330" x2="770" y2="244" stroke="#9aa0b4" stroke-width="2" marker-end="url(#f)"/>
+  <text x="752" y="300" fill="#9aa0b4" font-size="12">juega</text>
+</svg>

@@ -1,0 +1,17 @@
+# Nunca subir: datos privados, binarios, contenido del juego o de mods de terceros
+privado/
+maestro/
+servidor/
+fixes_src/
+armas_src/
+Output/
+*.exe
+*.dll
+*.pk3
+*.zip
+*.rar
+*.log
+launcher/config.json
+launcher/player.json
+manifest_cache.json
+ultimo_manifest.json

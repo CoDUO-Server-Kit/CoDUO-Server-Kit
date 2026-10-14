@@ -1,0 +1,6 @@
+Linea de comando del servidor (por ejemplo en TCAdmin > Administrador Linea de Comando):
+
++set fs_game MiMod +exec server.cfg +map mp_harbor
+
+- El mapa de arranque se elige aca; el modo con g_gametype en server.cfg.
+- En Linux, MiMod/ tiene que tener game.mp.uo.i386.so (viene con el servidor 1.51).
