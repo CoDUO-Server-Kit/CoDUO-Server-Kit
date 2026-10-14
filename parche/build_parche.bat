@@ -5,12 +5,11 @@ set CSC=%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe
 rem Windows de 32 bits: no tiene Framework64
 if not exist "%CSC%" set CSC=%WINDIR%\Microsoft.NET\Framework\v4.0.30319\csc.exe
 if not exist "%CSC%" (echo No encuentro el compilador de .NET 4 ^(csc.exe^). Instala .NET Framework 4.8. & exit /b 1)
+if not exist ..\launcher\CoDUOKitLauncher.exe (echo Primero compila el launcher: launcher\build.bat & exit /b 1)
 if not exist ..\Output mkdir ..\Output
-if not exist ..\launcher\CoDUOKitLauncher.exe (echo Primero compila el launcher: launcher\build.bat & exit /b 1)
 set ICON=
-if exist "..\..\Call of Duty Deluxe Edition\united_offensive.ico" if not exist ..\Output mkdir ..\Output
-if not exist ..\launcher\CoDUOKitLauncher.exe (echo Primero compila el launcher: launcher\build.bat & exit /b 1)
-set ICON=/win32icon:"..\..\Call of Duty Deluxe Edition\united_offensive.ico"
+rem icono opcional: poner icono.ico al lado de este script
+if exist "%~dp0icono.ico" set ICON=/win32icon:"%~dp0icono.ico"
 "%CSC%" /nologo /target:winexe /optimize+ /out:..\Output\Parche_Launcher_CoDUOKit.exe %ICON% ^
   /resource:..\launcher\CoDUOKitLauncher.exe,launcher.bin ^
   /r:System.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll Parche.cs
