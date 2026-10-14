@@ -15,6 +15,8 @@ Este kit existe gracias al trabajo de muchas personas de la comunidad de Call of
 *This kit exists thanks to many people from the Call of Duty community. None of their content is included in this repository; only the kit's own code is published.*
 
 > ¿Sos autor de algo listado como "desconocido" o falta tu nombre? Abrí un *issue* y lo corregimos.
+>
+> **Paquete listo para jugar:** en la sección *Releases* hay un paquete que incluye el mod, los mapas y el motor HD de sus autores, con estos créditos. Si sos autor de algo incluido y **no querés que esté**, abrí un *issue* y lo sacamos.
 
 ---
 

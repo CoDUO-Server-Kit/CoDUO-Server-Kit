@@ -8,6 +8,16 @@
 
 ![Launcher](imagenes/launcher.png)
 
+## Descargar y jugar ya
+
+En **[Releases](https://github.com/CoDUO-Server-Kit/CoDUO-Server-Kit/releases/latest)** está el **paquete listo para jugar** (`CoDUO-Server-Kit-Paquete.zip`): launcher + mod T-FBB + mapas + bots de práctica + motor HD.
+
+1. Tené instalado Call of Duty + United Offensive **1.51** (original; el paquete no trae el juego).
+2. Copiá el contenido del zip **dentro de la carpeta del juego** (donde está `CoDUOMP.exe`).
+3. Abrí `Launcher\CoDUOKitLauncher.exe` → **JUGAR** o **PRÁCTICA** contra bots, sin internet.
+
+Instrucciones completas dentro del zip (`LEEME.txt`). Para montar **tu propio servidor** con actualizaciones automáticas, seguí la [guía](docs/GUIA.md).
+
 ## Qué hace
 
 - **Launcher que se actualiza solo** (C#, .NET 4, anda desde Windows 7): compara cada archivo del mod con una lista de huellas (SHA-256) y baja **solo lo que cambió** desde un **release privado de GitHub**. También se actualiza a sí mismo.

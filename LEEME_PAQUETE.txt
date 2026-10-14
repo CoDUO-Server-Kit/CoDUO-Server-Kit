@@ -1,0 +1,60 @@
+=====================================================================
+ CoDUO Server Kit - PAQUETE LISTO PARA JUGAR
+ Call of Duty: United Offensive 1.51  -  mod T-FBB + mapas + bots + motor HD
+=====================================================================
+
+Creado por Leandro Guzman en colaboracion con GERARD!, Gaston, Miguel Soldier,
+Guille, Jubilado, Pyro y Sr-Oscuro. Proyecto: https://github.com/CoDUO-Server-Kit/CoDUO-Server-Kit
+
+QUE NECESITAS
+-------------
+- Call of Duty + United Offensive ORIGINAL, actualizado a la version 1.51.
+  (Este paquete NO trae el juego.)
+- Windows 7 SP1 o superior con .NET Framework 4.5 o mas nuevo (4.8 recomendado).
+- Para el motor HD: Windows de 64 bits.
+
+COMO SE INSTALA (1 minuto)
+--------------------------
+1. Abri la carpeta donde esta instalado el juego (la que tiene CoDUOMP.exe),
+   por ejemplo:  C:\Juegos\Call of Duty UO
+2. Copia ADENTRO de esa carpeta el contenido de este paquete:
+      CoDUOKit\   (el mod, los mapas y los bots)
+      Launcher\   (el launcher)
+      uo\         (si te pregunta por uomappack00.pk3, acepta reemplazar)
+3. Abri  Launcher\CoDUOKitLauncher.exe
+   - La primera vez te pide tu nombre de jugador.
+   - JUGAR: abre el juego con el mod.
+   - PRACTICA: elegis modo, mapa, cantidad de bots, dificultad y punteria,
+     y jugas contra bots en tu PC, sin internet.
+   - Teclas, Pantalla, Resolucion, Monitor y Mostrar FPS se configuran desde el launcher.
+   - "Motor mejorado (graficos)": activa el motor HD. Al destildarlo vuelve al original.
+
+SOBRE EL MOTOR HD
+-----------------
+- Es "Open CoD:UO 1.51", de su autor "brague". El launcher guarda tus archivos
+  originales y los restaura cuando destildas la casilla.
+- No esta firmado digitalmente: Windows o el antivirus pueden avisar la primera vez.
+- Si tenes Windows de 32 bits la casilla no aparece (el motor HD es de 64 bits).
+
+PROBLEMAS COMUNES
+-----------------
+- Textos raros tipo EXE_CONNECTINGTO: abri el juego desde el launcher (lo corrige solo).
+- Cartel de "Modo Seguro": lo evita el launcher; si aparece, usa el boton Reparar.
+- Pantalla muy blanca despues de cerrar el juego: el launcher la restaura al cerrar.
+- El mouse no responde en la practica: hace clic una vez en la ventana del juego.
+
+ARMAR TU PROPIO SERVIDOR
+------------------------
+Este paquete es para jugar. Para montar un servidor con actualizaciones automaticas
+para tu comunidad, segui la guia del proyecto (docs/GUIA.md en GitHub).
+
+CREDITOS Y AVISO
+----------------
+El mod T-FBB es de Team FunBallerBurg (www.funballerburg.de), basado en AWE de Bell.
+Los mapas son de sus respectivos autores (ver CREDITOS.md). El motor HD es de brague.
+Call of Duty es de Activision. Este paquete no tiene relacion oficial con ninguno de ellos.
+Si sos autor de algo incluido y no queres que este aca, avisanos (abri un "issue" en
+GitHub) y lo sacamos.
+
+El codigo propio del kit (launcher, bots, herramientas) es software libre, licencia
+GPL v3 (ver LICENCIA_del_kit.txt).
