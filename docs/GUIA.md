@@ -323,6 +323,7 @@ Diseño: ventanas sin la barra de Windows, bordes redondeados, botones redondead
 | Windows 7: no instala .NET 4.8 ("cadena de certificados") | Faltan certificados raíz de Microsoft | Instalar los certificados raíz (2010/2011) y la actualización KB4474419 (SHA-2) |
 | Windows 7: el launcher no conecta con GitHub | Faltan certificados raíz actuales (Sectigo / ISRG) | Instalar esos certificados raíz |
 | Algunos mapas tiran error al cargar | Errores en los propios scripts del mapa | La práctica permite excluirlos (lista en `Practica.cs`) |
+| Mapas **repetidos** en la lista del juego (con dos nombres) | El mapa está en la lista general (`mp/CoDmaps.arena`) y además en su propio `.arena` | `python herramientas\Anular_Arenas_Repetidas.py` y después `Armar_Pk3.py armas` (pisa los `.arena` propios con archivos vacíos; no toca los mapas) |
 
 ## 17. Seguridad
 
@@ -337,7 +338,7 @@ Diseño: ventanas sin la barra de Windows, bordes redondeados, botones redondead
 |---|---|
 | Cambiar el daño de un arma | Copiar `weapons/mp/<arma>` a `armas_src\weapons\mp\`, editar → `Armar_Pk3.py armas` → probar en local → subir al servidor + reiniciar → publicar |
 | Cambiar la configuración del servidor | Editar `servidor\MiMod\server.cfg` / `awe.cfg` → subir → reiniciar → `Generar_Practica_cfg.ps1` → publicar |
-| Agregar un mapa | Copiar el pk3 a `maestro\MiMod` y al servidor → `Auditar_Conflictos.py` (total 0) → reiniciar → publicar |
+| Agregar un mapa | Copiar el pk3 a `maestro\MiMod` y al servidor → agregarlo a tu `mp/CoDmaps.arena` → `Anular_Arenas_Repetidas.py` + `Armar_Pk3.py armas` → `Auditar_Conflictos.py` (total 0) → reiniciar → publicar |
 | Actualizar el launcher | `launcher\build.bat` → copiar a `maestro\Launcher\CoDUOKitLauncher.exe.nuevo` → publicar |
 | Cambiar el anti-camper | En `awe.cfg`: `awe_anticamp_time` (segundos quieto) y `awe_anticamp_marktime` (duración de la marca) |
 
