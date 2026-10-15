@@ -36,6 +36,13 @@ SOBRE EL MOTOR HD
 - No esta firmado digitalmente: Windows o el antivirus pueden avisar la primera vez.
 - Si tenes Windows de 32 bits la casilla no aparece (el motor HD es de 64 bits).
 
+COMPROBAR QUE EL PAQUETE ES EL ORIGINAL
+---------------------------------------
+Los programas no estan firmados digitalmente. Bajalo solo de la pagina de Releases del
+proyecto y compara las huellas SHA-256 con las que figuran en las notas del Release:
+    certutil -hashfile Launcher\CoDUOKitLauncher.exe SHA256
+Si no coinciden, no lo uses.
+
 PROBLEMAS COMUNES
 -----------------
 - Textos raros tipo EXE_CONNECTINGTO: abri el juego desde el launcher (lo corrige solo).
@@ -53,6 +60,9 @@ Opcion 1 - Servidor con este mismo paquete (sin actualizaciones automaticas):
 Opcion 2 - Con actualizaciones automaticas (el launcher baja solo cada cambio):
   - Hace falta un repositorio privado en GitHub y dos tokens. Completas en config.json
     "owner", "repo" y "token", y publicas con la herramienta del proyecto.
+  - Recomendado: firma las actualizaciones (herramientas\Generar_Claves.ps1 y el campo
+    "publicKey" de config.json), asi nadie puede repartir archivos a tus jugadores
+    aunque consiga tu token de GitHub. Ver docs/GUIA.md, paso 4.
   - Guia paso a paso: docs/GUIA.md en GitHub (pasos 3 a 5).
 
 CREDITOS Y AVISO

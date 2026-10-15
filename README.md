@@ -20,7 +20,7 @@ Instrucciones completas dentro del zip (`LEEME.txt`). Para montar **tu propio se
 
 ## Qué hace
 
-- **Launcher que se actualiza solo** (C#, .NET 4, anda desde Windows 7): compara cada archivo del mod con una lista de huellas (SHA-256) y baja **solo lo que cambió** desde un **release privado de GitHub**. También se actualiza a sí mismo.
+- **Launcher que se actualiza solo** (C#, .NET 4, anda desde Windows 7): compara cada archivo del mod con una lista de huellas (SHA-256) y baja **solo lo que cambió** desde un **release privado de GitHub**. También se actualiza a sí mismo. Las actualizaciones pueden ir **firmadas**: el launcher solo acepta lo que firmaste con tu clave privada, aunque alguien consiga tu token de GitHub.
 - **Servidor cerrado**: `sv_pure 1` y descargas del juego apagadas. Solo entra quien tiene tus pk3 **idénticos**, y esos archivos nunca son públicos.
 - **Práctica con bots en cualquier mapa**: un servidor local oculto con bots que **arman solos la red de caminos** de cada mapa al cargarlo (sin grabar recorridos a mano), se mueven suave y tienen animación de caminar (ideas de MeatBot).
 - **Top del mes**: una tarea de GitHub Actions lee cada 30 minutos el registro de partidas del servidor; el launcher muestra quién hizo más bajas y ganó más partidas, y se reinicia cada mes.
@@ -60,7 +60,8 @@ Todo se hace desde la carpeta del proyecto, en Windows. Los detalles están en l
 | **Config de la práctica** | `powershell -File herramientas\Generar_Practica_cfg.ps1` | `servidor\MiMod\server.cfg` y `awe.cfg` | `maestro\MiMod\practica.cfg` |
 | **Mapas sin repetir** | `python herramientas\Anular_Arenas_Repetidas.py` (y después `Armar_Pk3.py armas`) | Tu lista general `mp/CoDmaps.arena` en un pk3 de `maestro\MiMod\` | `armas_src\mp\*.arena` vacíos: cada mapa aparece una sola vez |
 | **Auditoría de conflictos** | `python herramientas\Auditar_Conflictos.py` | Los pk3 en `maestro\MiMod\` | Informe (tiene que dar `total: 0`) |
-| **Publicar a GitHub** | `herramientas\Publicar_Actualizacion.bat` | `privado\github.json` (ver `ejemplos\`) | Release `mod` + `manifest.json` |
+| **Claves de firma** (una vez) | `powershell -File herramientas\Generar_Claves.ps1` | — | `privado\firma_privada.dat` (cifrada) + la clave pública para `config.json` |
+| **Publicar a GitHub** | `herramientas\Publicar_Actualizacion.bat` | `privado\github.json` (ver `ejemplos\`) | Release `mod` + `manifest.json` (+ `manifest.sig` si hay claves) |
 | **Top del mes** | `python estadisticas\subir_a_github.py` y `python estadisticas\poner_secretos.py` | Python + `paramiko` y `pynacl` | Tarea de GitHub Actions cada 30 min |
 
 ## Motor HD: antes y después
@@ -84,6 +85,10 @@ Este repositorio tiene **solo el código propio del kit**. **No** incluye el jue
 3. Compilá el launcher con `launcher\build.bat` y completá su `config.json` ([§8](docs/GUIA.md#8-paso-4--compilar-y-configurar-el-launcher)).
 4. Poné tus archivos en `maestro\` y corré `herramientas\Publicar_Actualizacion.bat` ([§9](docs/GUIA.md#9-paso-5--publicar-actualizaciones)).
 
+## Seguridad
+
+Lista de control en la [guía §17](docs/GUIA.md#17-seguridad): firma de actualizaciones, tokens con vencimiento, huella del servidor SFTP y los límites de `sv_pure`. Para comprobar el paquete descargado, compará su huella SHA-256 con la de las notas del *Release*. ¿Encontraste una vulnerabilidad? Reportala en privado según [SECURITY.md](SECURITY.md).
+
 ## Licencia
 
 GPL v3 — ver [LICENSE](LICENSE). Las partes derivadas de otros mods (el script de bots de AWE) mantienen los derechos de sus autores — ver [CREDITS.md](CREDITS.md).
@@ -92,4 +97,4 @@ GPL v3 — ver [LICENSE](LICENSE). Las partes derivadas de otros mods (el script
 
 ## English summary
 
-**CoDUO Server Kit** is a complete toolkit to run a private Call of Duty: United Offensive 1.51 community server with a custom mod: a self-updating launcher (C#, .NET 4, Windows 7+) that syncs your mod from a private GitHub release using a SHA-256 manifest; a locked-down server (`sv_pure 1`, downloads off); bot practice on any map with bots that build their own navigation graph at load time; a monthly leaderboard updated by GitHub Actions; one-click repair of classic UO issues; an optional HD-engine switch; and the publishing tools behind it. Requirements and build steps are in the tables above; the full guide is in Spanish ([docs/GUIA.md](docs/GUIA.md)). Created by **Leandro Guzman** with GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro and Sr-Oscuro, with the help of AI tools. It contains only the kit's own code (GPL v3) — no game files, mods, maps or engine.
+**CoDUO Server Kit** is a complete toolkit to run a private Call of Duty: United Offensive 1.51 community server with a custom mod: a self-updating launcher (C#, .NET 4, Windows 7+) that syncs your mod from a private GitHub release using a SHA-256 manifest, optionally RSA-signed so only your private key can push updates; a locked-down server (`sv_pure 1`, downloads off); bot practice on any map with bots that build their own navigation graph at load time; a monthly leaderboard updated by GitHub Actions; one-click repair of classic UO issues; an optional HD-engine switch; and the publishing tools behind it. Requirements and build steps are in the tables above; the full guide is in Spanish ([docs/GUIA.md](docs/GUIA.md)). Created by **Leandro Guzman** with GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro and Sr-Oscuro, with the help of AI tools. It contains only the kit's own code (GPL v3) — no game files, mods, maps or engine.

@@ -95,7 +95,7 @@ foreach ($f in $files) {
 }
 
 # 4) Borrar del release lo que ya no esta en la carpeta maestra
-$validos = @($files | ForEach-Object { $_.asset }) + 'manifest.json'
+$validos = @($files | ForEach-Object { $_.asset }) + 'manifest.json' + 'manifest.sig'
 foreach ($name in @($assets.Keys)) {
     if ($validos -notcontains $name) { Write-Host "  BORRANDO del release: $name"; Remove-Asset $name }
 }
@@ -103,6 +103,20 @@ foreach ($name in @($assets.Keys)) {
 # 5) Subir el manifest (siempre al final, asi el launcher nunca ve una lista a medias)
 $tmp = Join-Path $env:TEMP 'manifest.json'
 [IO.File]::WriteAllText($tmp, ($manifest | ConvertTo-Json -Depth 5), (New-Object Text.UTF8Encoding($false)))
+# Firma (si generaste las claves con Generar_Claves.ps1): el launcher con "publicKey" solo acepta listas firmadas
+$clave = Join-Path $privado 'firma_privada.dat'
+if (Test-Path $clave) {
+    Add-Type -AssemblyName System.Security
+    $rsa = New-Object Security.Cryptography.RSACryptoServiceProvider
+    $rsa.PersistKeyInCsp = $false
+    $rsa.FromXmlString([Text.Encoding]::UTF8.GetString([Security.Cryptography.ProtectedData]::Unprotect([IO.File]::ReadAllBytes($clave), $null, 'CurrentUser')))
+    $sig = Join-Path $env:TEMP 'manifest.sig'
+    [IO.File]::WriteAllText($sig, [Convert]::ToBase64String($rsa.SignData([IO.File]::ReadAllBytes($tmp), 'SHA256')))
+    Upload $sig 'manifest.sig'
+    Write-Host "  manifest firmado"
+} else {
+    Write-Host "  AVISO: sin firma (no existe $clave). Recomendado: herramientas\Generar_Claves.ps1" -ForegroundColor Yellow
+}
 Upload $tmp 'manifest.json'
 Copy-Item $tmp $ultimo -Force
 

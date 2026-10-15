@@ -7,5 +7,6 @@
   "modDir": "MiMod",
   "server": "123.45.67.89:28960",
   "title": "Mi Comunidad",
-  "subtitle": "Call of Duty: United Offensive  -  Mi Mod"
+  "subtitle": "Call of Duty: United Offensive  -  Mi Mod",
+  "publicKey": "PEGAR_ACA_LA_CLAVE_PUBLICA_DE_Generar_Claves.ps1 (o dejar vacio para no exigir firma)"
 }

@@ -174,7 +174,9 @@ privado/                github.json con tus tokens  ⚠️ NUNCA lo publiques
    ```
 4. El release `mod` se crea solo la primera vez que publicás.
 
-> El token de lectura viaja dentro del launcher: cualquiera que lo tenga puede **leer** tus archivos. Por eso el repo es privado y el launcher se reparte solo entre tu comunidad. El de escritura **nunca** sale de tu PC.
+> ⚠️ **Límite del diseño — leelo:** el token de lectura va **en texto plano** dentro del `config.json` que reciben todos los jugadores. Cualquiera que tenga el launcher puede sacarlo y bajarse **todos** tus archivos del release, y con ellos entrar a tu servidor (para `sv_pure` es igual que un jugador más). `sv_pure` + repo privado **no es una seguridad fuerte**: sirve para que no entre cualquiera, no para frenar a alguien de tu comunidad que le pase el launcher a otro. Repartí el launcher solo a gente de confianza; si se filtra, creá otro token de lectura, borrá el viejo y repartí el launcher nuevo con el parche.
+>
+> El token de **escritura nunca** sale de tu PC. Ponele **vencimiento** (por ejemplo 1 año) y renovalo antes de que venza. Al de lectura también podés ponerle vencimiento, pero cuando vence los launchers dejan de actualizarse hasta que les llegue uno nuevo con el parche.
 
 ## 8. Paso 4 — Compilar y configurar el launcher
 
@@ -191,13 +193,24 @@ privado/                github.json con tus tokens  ⚠️ NUNCA lo publiques
      "gameExe": "CoDUOMP.exe", "modDir": "MiMod",
      "server": "123.45.67.89:28960",
      "title": "Mi Comunidad",
-     "subtitle": "Call of Duty: United Offensive  -  Mi Mod"
+     "subtitle": "Call of Duty: United Offensive  -  Mi Mod",
+     "publicKey": "<RSAKeyValue>...(clave PUBLICA de firma, ver punto 5)</RSAKeyValue>"
    }
    ```
 3. El launcher se instala en `<carpeta del juego>\Launcher\` (por ejemplo `C:\Juegos\Call of Duty UO\Launcher\CoDUOKitLauncher.exe`).
 4. Para que se **actualice solo**: copiá el exe compilado a `maestro\Launcher\CoDUOKitLauncher.exe.nuevo` (con ese nombre) y publicá. Cada launcher baja el `.nuevo`, se renombra a sí mismo a `.viejo`, pone el nuevo y se reinicia.
 
 > Se publica como `.nuevo` y no como `.exe` a propósito: si no, los launchers intentan sobrescribir el exe que está corriendo y Windows lo bloquea ("Acceso denegado").
+
+5. **Firmá las actualizaciones (muy recomendado).** Sin firma, quien consiga tu token de escritura puede publicar un programa cualquiera y el launcher de **todos** tus jugadores lo bajaría y lo ejecutaría. Con firma, el launcher solo acepta la lista de archivos (`manifest.json`) firmada con **tu** clave privada, que nunca sale de tu PC:
+   ```
+   powershell -ExecutionPolicy Bypass -File herramientas\Generar_Claves.ps1 -Exportar E:\respaldo_clave_firma.xml
+   ```
+   - Crea la clave privada en `privado\firma_privada.dat`, **cifrada con tu usuario de Windows** (copiada a otra PC no sirve), y muestra la **clave pública** (`<RSAKeyValue>...`).
+   - Pegá la clave pública en `config.json`, campo `"publicKey"`. Desde ahí `Publicar_Actualizacion` sube también `manifest.sig` y el launcher rechaza cualquier lista sin firma válida (en el registro dice `ACTUALIZACION RECHAZADA` y sigue con los archivos que ya tenía).
+   - `-Exportar` guarda una copia **sin cifrar** de la privada: llevala a un pendrive y borrala de la PC. Si cambiás de PC, `Generar_Claves.ps1 -Importar <archivo>`. **Si la perdés**, tenés que generar otra y repartir a todos un launcher con la nueva clave pública (por el parche).
+   - Para pasar a firma a jugadores que ya tienen el launcher: generá las claves, publicá el launcher nuevo (`.nuevo`) **y** el `config.json` con `publicKey` dentro de `maestro\Launcher\`. Las versiones viejas del launcher no miran la firma y se actualizan solas.
+   - El launcher además rechaza cualquier ruta que intente escribir fuera de la carpeta del juego (`..`, `C:\...`).
 
 ## 9. Paso 5 — Publicar actualizaciones
 
@@ -255,8 +268,9 @@ Límites: `bullettrace` no ve las paredes invisibles (*playerclip*) y los bots n
    python estadisticas\poner_secretos.py
    ```
 3. Ajustá en el `.yml` (o como variables) `SFTP_HOST`, `SFTP_PORT` y `LOG_PATH` (la ruta de `games_mp.log` en tu servidor; en TCAdmin suele estar en `<servidor>/.callofduty/MiMod/games_mp.log`).
+4. **Huella del servidor (recomendado):** la primera corrida muestra en el registro de Actions `AVISO: ... SFTP_HOSTKEY: SHA256:...`. Guardala como secreto (`set SFTP_HOSTKEY=SHA256:...` y otra vez `poner_secretos.py`). Desde ahí, si alguien se hace pasar por tu servidor, la tarea **frena sin mandar la contraseña**. Si cambiás de servidor, actualizá el secreto.
 
-GitHub lo corre cada 30 minutos, gratis, aunque tu PC esté apagada. Si cambiás la clave SFTP, volvé a correr `poner_secretos.py`.
+GitHub lo corre cada 30 minutos, gratis, aunque tu PC esté apagada. Si cambiás la clave SFTP, volvé a correr `poner_secretos.py`. Lo ideal es que el usuario SFTP de esta tarea **solo pueda leer** el registro (si tu panel permite subusuarios).
 
 ## 13. Motor HD (opcional)
 
@@ -327,10 +341,18 @@ Diseño: ventanas sin la barra de Windows, bordes redondeados, botones redondead
 
 ## 17. Seguridad
 
-- **Nunca** publiques `privado\github.json`, tu `server.cfg` real (tiene la clave rcon) ni tus pk3.
-- El token del launcher tiene que ser **solo de lectura** y **solo de tu repo**.
+**Qué protege el kit y qué no.** `sv_pure` + repo privado deja afuera a quien no tiene tus archivos, pero **no** a quien consiga tu launcher (ver el aviso del [paso 3](#7-paso-3--github-repo-privado-tokens-y-release)). La firma de las actualizaciones protege a tus jugadores aunque te roben el token de escritura.
+
+**Lista de control:**
+- **Nunca** publiques `privado\` (tokens y clave de firma), tu `server.cfg` real (tiene la clave rcon) ni tus pk3.
+- El token del launcher tiene que ser **solo de lectura** y **solo de tu repo**. El de escritura, con **vencimiento**.
+- **Firmá** las actualizaciones (`Generar_Claves.ps1` + `publicKey`, [paso 4](#8-paso-4--compilar-y-configurar-el-launcher)) y guardá el respaldo de la clave privada **fuera** de la PC.
+- Top del mes: guardá la **huella del servidor** (`SFTP_HOSTKEY`, [§12](#12-top-del-mes-estadísticas)). La tarea de Actions usa acciones fijadas a un commit exacto y versiones fijas de Python: si las actualizás, hacelo a mano y a conciencia.
+- Activá la **verificación en dos pasos** en GitHub y en el panel del servidor. En el repo privado: *Settings → Code security* → **Secret scanning** y **Push protection**.
+- Usá claves **largas y distintas** para SFTP, panel y rcon. El rcon del juego viaja **sin cifrar**: no uses la misma clave en otro lado. Cambialas si las compartiste.
 - Si alguien publicó tus pk3 (por ejemplo, por una "descarga rápida" del panel): cambiá un archivo dentro de un pk3 tuyo (por ejemplo un `.txt` cualquiera en `armas_src\`), rearmalo, subilo y publicá. La copia filtrada queda vieja y `sv_pure` la rechaza.
-- Cambiá las claves de SFTP/panel/rcon si las compartiste.
+- El launcher y el motor HD **no están firmados digitalmente** (Windows puede avisar). Para comprobar que un zip descargado es el original, compará su huella con la que figura en las notas del *Release*: `certutil -hashfile archivo.zip SHA256`.
+- ¿Encontraste una vulnerabilidad en el kit? Ver [SECURITY.md](../SECURITY.md).
 
 ## 18. Tareas comunes
 
@@ -428,7 +450,7 @@ herramientas\Publicar_Actualizacion.bat
 ```
 
 - **Necesita:** `privado\github.json` (partí de `ejemplos\github.example.json`) con el token de **escritura**.
-- **Sube:** todo lo que hay en `maestro\` (solo lo que cambió), borra del release lo que ya no está y sube el `manifest.json` al final.
+- **Sube:** todo lo que hay en `maestro\` (solo lo que cambió), borra del release lo que ya no está y sube el `manifest.json` al final. Si existe `privado\firma_privada.dat` (de `Generar_Claves.ps1`), lo firma y sube también `manifest.sig`; si no, avisa `sin firma`.
 - **Opción:** `powershell -File herramientas\Publicar_Actualizacion.ps1 -Forzar` vuelve a subir todo.
 
 ### 19.9 Top del mes
@@ -441,6 +463,7 @@ set SFTP_PASS=clave
 set SFTP_HOST=ip.del.servidor
 set SFTP_PORT=22
 set LOG_PATH=ruta/en/el/servidor/MiMod/games_mp.log
+set SFTP_HOSTKEY=SHA256:...   (opcional, recomendado: ver §12)
 python estadisticas\poner_secretos.py
 ```
 

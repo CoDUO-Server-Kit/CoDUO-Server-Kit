@@ -31,6 +31,32 @@ namespace CoDUOKit
         public string server = "123.45.67.89:28960";   // boton "Entrar al servidor"
         public string title = "";                      // nombre de la comunidad (vacio = el de Brand)
         public string subtitle = "";                   // linea de abajo del titulo (vacio = la de Brand)
+        public string publicKey = "";                  // clave publica de firma (herramientas\Generar_Claves.ps1); vacio = no exige firma
+    }
+
+    // Firma del manifest: el publicador firma manifest.json con su clave privada (manifest.sig, RSA + SHA-256)
+    // y el launcher solo acepta una lista firmada por esa clave. Asi, aunque alguien consiga el token de
+    // escritura del repo, no puede repartir archivos a los jugadores.
+    static class Firma
+    {
+        public static bool Ok(byte[] datos, string firmaBase64, string clavePublica)
+        {
+            try
+            {
+                using (var rsa = new RSACryptoServiceProvider())
+                {
+                    rsa.PersistKeyInCsp = false;
+                    rsa.FromXmlString(clavePublica);
+                    return rsa.VerifyData(datos, "SHA256", Convert.FromBase64String(firmaBase64.Trim()));
+                }
+            }
+            catch { return false; }
+        }
+    }
+
+    class FirmaInvalidaException : Exception
+    {
+        public FirmaInvalidaException(string m) : base(m) { }
     }
 
     // Textos de la comunidad (los pisa config.json: "title" y "subtitle")
@@ -156,9 +182,19 @@ namespace CoDUOKit
 
         public string DownloadText(long assetId)
         {
+            return Texto(DownloadBytes(assetId));
+        }
+
+        public byte[] DownloadBytes(long assetId)
+        {
             string tmp = Path.GetTempFileName();
-            try { Download(assetId, tmp, null); return File.ReadAllText(tmp, Encoding.UTF8); }
+            try { Download(assetId, tmp, null); return File.ReadAllBytes(tmp); }
             finally { File.Delete(tmp); }
+        }
+
+        public static string Texto(byte[] b)
+        {
+            using (var sr = new StreamReader(new MemoryStream(b), Encoding.UTF8, true)) return sr.ReadToEnd();
         }
     }
 
@@ -580,6 +616,16 @@ namespace CoDUOKit
             }
         }
 
+        static bool RutaSegura(string rel)
+        {
+            if (string.IsNullOrEmpty(rel)) return false;
+            string p = rel.Replace('/', '\\');
+            if (Path.IsPathRooted(p) || p.Contains(":")) return false;
+            foreach (var parte in p.Split('\\')) if (parte == ".." || parte == ".") return false;
+            string full = Path.GetFullPath(Path.Combine(Paths.GameDir, p));
+            return full.StartsWith(Paths.GameDir.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase);
+        }
+
         void Verify()
         {
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
@@ -593,14 +639,27 @@ namespace CoDUOKit
                 assets = gh.ListAssets();
                 long mid;
                 if (!assets.TryGetValue("manifest.json", out mid)) throw new Exception("el release no tiene manifest.json");
-                string text = gh.DownloadText(mid);
+                byte[] raw = gh.DownloadBytes(mid);
+                if (!string.IsNullOrEmpty(cfg.publicKey))
+                {
+                    if (!cfg.publicKey.TrimStart().StartsWith("<RSAKeyValue>"))
+                        throw new FirmaInvalidaException("publicKey de config.json no es una clave valida (Generar_Claves.ps1)");
+                    long sid;
+                    if (!assets.TryGetValue("manifest.sig", out sid))
+                        throw new FirmaInvalidaException("el release no tiene manifest.sig");
+                    if (!Firma.Ok(raw, gh.DownloadText(sid), cfg.publicKey))
+                        throw new FirmaInvalidaException("la firma de manifest.json no coincide con la clave del launcher");
+                }
+                string text = GitHub.Texto(raw);
                 man = Json.Parse<Manifest>(text);
                 File.WriteAllText(Paths.ManifestCache, text, new UTF8Encoding(false));
                 Log("Version publicada: " + man.version);
             }
             catch (Exception ex)
             {
-                Log("Sin conexion con GitHub (" + ex.Message + ")");
+                // Firma invalida: no se baja nada nuevo; se verifica contra la ultima lista buena (ya firmada)
+                if (ex is FirmaInvalidaException) Log("ACTUALIZACION RECHAZADA (" + ex.Message + "). Avisale al administrador.");
+                else Log("Sin conexion con GitHub (" + ex.Message + ")");
                 assets = null;
                 if (File.Exists(Paths.ManifestCache))
                 {
@@ -613,6 +672,13 @@ namespace CoDUOKit
                     return;
                 }
             }
+
+            // Ningun archivo puede quedar fuera de la carpeta del juego (rutas con ".." o absolutas)
+            foreach (var f in man.files)
+                if (!RutaSegura(f.path)) { Log("ERROR: ruta no permitida en la lista: " + f.path); Status("La lista de archivos publicada es invalida. Avisale al administrador.", 0); return; }
+            if (man.managedDirs != null)
+                foreach (var d in man.managedDirs)
+                    if (!RutaSegura(d)) { Log("ERROR: carpeta no permitida en la lista: " + d); Status("La lista de archivos publicada es invalida. Avisale al administrador.", 0); return; }
 
             // 1) Calcular que archivos hay que bajar
             long totalBytes = 0;

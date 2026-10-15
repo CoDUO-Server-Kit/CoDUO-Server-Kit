@@ -7,13 +7,14 @@ y publica estadisticas.json en el release "stats" del repo de GitHub (el launche
 
 Corre solo en GitHub Actions cada 30 minutos (.github/workflows/estadisticas.yml) o a mano en la PC:
   python actualizar_estadisticas.py
-Variables de entorno: SFTP_HOST, SFTP_PORT, SFTP_USER, SFTP_PASS, LOG_PATH, GH_TOKEN, GH_REPO (dueno/repo)
+Variables de entorno: SFTP_HOST, SFTP_PORT, SFTP_USER, SFTP_PASS, SFTP_HOSTKEY, LOG_PATH, GH_TOKEN, GH_REPO (dueno/repo)
+SFTP_HOSTKEY = huella del servidor (SHA256:...): la primera corrida sin ella la muestra en el registro.
 (en la PC, si faltan, se toman de ..\\privado\\github.json y de los valores de abajo).
 
 El registro no tiene fechas: lo nuevo se cuenta en el mes en que se lee (hora de Argentina).
 Los nombres cuentan EXACTOS (con colores): "^1Juan" y "Juan" son dos jugadores distintos.
 """
-import datetime, hashlib, io, json, os, sys, urllib.request, urllib.error
+import base64, datetime, hashlib, io, json, os, sys, urllib.request, urllib.error
 
 TAG = "stats"
 ASSET = "estadisticas.json"
@@ -76,12 +77,27 @@ class GitHub:
 
 
 # ---------------------------------------------------------------- registro
+def huella(clave):
+    """Huella de la clave SSH del servidor, en el mismo formato que ssh-keygen -lf (SHA256:...)."""
+    return "SHA256:" + base64.b64encode(hashlib.sha256(clave.asbytes()).digest()).decode().rstrip("=")
+
+
 def leer_log_nuevo(estado):
     import paramiko
     host = env("SFTP_HOST", "123.45.67.89")
     port = int(env("SFTP_PORT", "22"))
     t = paramiko.Transport((host, port))
-    t.connect(username=env("SFTP_USER"), password=env("SFTP_PASS"))
+    t.start_client(timeout=30)
+    # Antes de mandar la contrasena se comprueba que el servidor sea el de siempre (huella de su clave SSH)
+    recibida = huella(t.get_remote_server_key())
+    esperada = env("SFTP_HOSTKEY")
+    if esperada and recibida != esperada.strip():
+        t.close()
+        raise SystemExit("La huella del servidor SFTP (%s) no coincide con SFTP_HOSTKEY: posible suplantacion, "
+                         "no se envio la contrasena. Si cambiaste de servidor, actualiza el secreto." % recibida)
+    if not esperada:
+        print("AVISO: no se verifica la identidad del servidor SFTP. Guarda esta huella en el secreto SFTP_HOSTKEY: " + recibida)
+    t.auth_password(env("SFTP_USER"), env("SFTP_PASS"))
     s = paramiko.SFTPClient.from_transport(t)
     path = env("LOG_PATH", "123.45.67.89_28960/.callofduty/MiMod/games_mp.log")
     size = s.stat(path).st_size

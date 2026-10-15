@@ -1,6 +1,6 @@
 # TOP DEL MES: cada 30 minutos lee el registro de partidas del servidor y actualiza estadisticas.json
 # (release "stats"), que muestra el launcher. La contrasena SFTP va en los secretos del repo:
-# Settings > Secrets and variables > Actions: SFTP_USER y SFTP_PASS
+# Settings > Secrets and variables > Actions: SFTP_USER y SFTP_PASS (y SFTP_HOSTKEY, recomendado)
 name: Estadisticas
 
 on:
@@ -20,15 +20,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      # Acciones fijadas a un commit exacto (una etiqueta como @v4 puede moverse; un commit no)
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065   # v5.6.0
         with:
           python-version: "3.12"
-      - run: pip install paramiko
+      - run: pip install paramiko==5.0.0
       - run: python estadisticas/actualizar_estadisticas.py
         env:
           SFTP_USER: ${{ secrets.SFTP_USER }}
           SFTP_PASS: ${{ secrets.SFTP_PASS }}
+          # huella del servidor (SHA256:...): si esta, no se manda la contrasena a un servidor distinto
+          SFTP_HOSTKEY: ${{ secrets.SFTP_HOSTKEY }}
           # opcionales (si no estan, se usan los valores de actualizar_estadisticas.py)
           SFTP_HOST: ${{ secrets.SFTP_HOST }}
           SFTP_PORT: ${{ secrets.SFTP_PORT }}
