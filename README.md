@@ -4,7 +4,7 @@
 
 > 📖 **Guía completa paso a paso:** [docs/GUIA.md](docs/GUIA.md) · Licencia: [GPL v3](LICENSE) · Créditos: [CREDITS.md](CREDITS.md) · *English summary at the end*
 
-**Creado por Leandro Guzman** en colaboración con un grupo de técnicos aficionados al CoD — **GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro y Sr-Oscuro** — en nuestro tiempo libre, en charlas de Zoom mientras jugábamos.
+**Creado por Leandro Guzman** en colaboración con un grupo de técnicos aficionados al CoD — **GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro y Sr-Oscuro** — en nuestro tiempo libre, en charlas de Zoom mientras jugábamos. Desarrollado con asistencia de herramientas de IA.
 
 ![Launcher](imagenes/launcher.png)
 
@@ -92,4 +92,4 @@ GPL v3 — ver [LICENSE](LICENSE). Las partes derivadas de otros mods (el script
 
 ## English summary
 
-**CoDUO Server Kit** is a complete toolkit to run a private Call of Duty: United Offensive 1.51 community server with a custom mod: a self-updating launcher (C#, .NET 4, Windows 7+) that syncs your mod from a private GitHub release using a SHA-256 manifest; a locked-down server (`sv_pure 1`, downloads off); bot practice on any map with bots that build their own navigation graph at load time; a monthly leaderboard updated by GitHub Actions; one-click repair of classic UO issues; an optional HD-engine switch; and the publishing tools behind it. Requirements and build steps are in the tables above; the full guide is in Spanish ([docs/GUIA.md](docs/GUIA.md)). Created by **Leandro Guzman** with GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro and Sr-Oscuro. It contains only the kit's own code (GPL v3) — no game files, mods, maps or engine.
+**CoDUO Server Kit** is a complete toolkit to run a private Call of Duty: United Offensive 1.51 community server with a custom mod: a self-updating launcher (C#, .NET 4, Windows 7+) that syncs your mod from a private GitHub release using a SHA-256 manifest; a locked-down server (`sv_pure 1`, downloads off); bot practice on any map with bots that build their own navigation graph at load time; a monthly leaderboard updated by GitHub Actions; one-click repair of classic UO issues; an optional HD-engine switch; and the publishing tools behind it. Requirements and build steps are in the tables above; the full guide is in Spanish ([docs/GUIA.md](docs/GUIA.md)). Created by **Leandro Guzman** with GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro and Sr-Oscuro, with the help of AI tools. It contains only the kit's own code (GPL v3) — no game files, mods, maps or engine.

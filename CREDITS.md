@@ -4,9 +4,9 @@
 
 Creado por **Leandro Guzman**, en colaboración con un grupo de técnicos aficionados al Call of Duty:
 **GERARD!**, **Gaston**, **Miguel Soldier**, **Guille**, **Jubilado**, **Pyro** y **Sr-Oscuro**.
-Lo hicimos en nuestro tiempo libre, en charlas de Zoom mientras jugábamos.
+Lo hicimos en nuestro tiempo libre, en charlas de Zoom mientras jugábamos, con asistencia de herramientas de IA para la programación y las pruebas.
 
-*Created by **Leandro Guzman** with a group of tech-hobbyist Call of Duty friends — GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro and Sr-Oscuro — in our free time, over Zoom calls while we played.*
+*Created by **Leandro Guzman** with a group of tech-hobbyist Call of Duty friends — GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro and Sr-Oscuro — in our free time, over Zoom calls while we played, with the help of AI tools for coding and testing.*
 
 ---
 
