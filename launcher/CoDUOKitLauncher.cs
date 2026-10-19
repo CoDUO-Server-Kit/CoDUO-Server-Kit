@@ -91,6 +91,7 @@ namespace CoDUOKit
         public string monitor;  // DeviceName del monitor elegido (ej. \\.\DISPLAY2); vacio = el principal
         public int width;
         public int height;
+        public int video;       // 1 = ya se aplicaron una vez los graficos recomendados (despues manda lo que elija el jugador en el juego)
         public string practiceMap, practiceMode;   // ultima practica elegida
         public int practiceBotsAllies = 0, practiceBotsAxis = 4, practiceBotsDm = 4, practiceDifficulty = 1, practiceAccuracy = 0;
     }
@@ -211,7 +212,9 @@ namespace CoDUOKit
         Label lblName, lblStatus, lblTitle, lblSub;
         SlimBar bar;
         TextBox log;
-        Button btnPlay, btnPractice, btnServer, btnKeys, btnName, btnVerify, btnFolder;
+        Button btnPlay, btnPractice, btnServer, btnServer2, btnKeys, btnName, btnVerify, btnFolder;
+        string server1, server2;
+        Point baseServer = Point.Empty;
         ComboBox cmbDisplay, cmbRes, cmbMonitor;
         CheckBox chkFps, chkMotor;
         bool loadingDisplay;
@@ -272,8 +275,12 @@ namespace CoDUOKit
             btnKeys.Width = 88; btnName.Width = 96; btnVerify.Width = 96; btnFolder.Width = 84;
 
             btnServer = new RoundButton { Text = "ENTRAR AL SERVIDOR", Location = new Point(470, 70), Size = new Size(190, 38), BackColor = Color.FromArgb(214, 124, 30), ForeColor = Color.White, Font = new Font("Segoe UI", 10f, FontStyle.Bold), Radius = 12 };
-            btnServer.Click += delegate { Launch(" +connect " + (string.IsNullOrEmpty(cfg.server) ? "123.45.67.89:28960" : cfg.server)); };
+            btnServer.Click += delegate { EntrarServidor(1); };
             Controls.Add(btnServer);
+            // Servidor 2, 3...: aparecen si Launcher\servidores.json (publicado con la actualizacion) trae mas de uno
+            btnServer2 = new RoundButton { Visible = false, BackColor = Color.FromArgb(150, 84, 24), ForeColor = Color.White, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), Radius = 12 };
+            btnServer2.Click += delegate { EntrarServidor(2); };
+            Controls.Add(btnServer2);
 
             // TOP DEL MES (estadisticas del servidor: bajas y partidas ganadas, se reinicia cada mes)
             var btnTop = new RoundButton { Text = "TOP DEL MES", Location = new Point(470, 6), Size = new Size(190, 30), BackColor = Color.FromArgb(58, 50, 22), ForeColor = Color.FromArgb(240, 200, 70), Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), Radius = 15, BorderColor = Color.FromArgb(232, 190, 60) };
@@ -323,7 +330,7 @@ namespace CoDUOKit
 
         void SetBusy(bool b)
         {
-            Action a = delegate { busy = b; btnPlay.Enabled = !b; btnPractice.Enabled = !b; btnServer.Enabled = !b; btnVerify.Enabled = !b; btnName.Enabled = !b; };
+            Action a = delegate { busy = b; btnPlay.Enabled = !b; btnPractice.Enabled = !b; btnServer.Enabled = !b; btnServer2.Enabled = !b; btnVerify.Enabled = !b; btnName.Enabled = !b; };
             if (InvokeRequired) BeginInvoke(a); else a();
         }
 
@@ -343,6 +350,7 @@ namespace CoDUOKit
             if (!string.IsNullOrEmpty(cfg.subtitle)) lblSub.Text = cfg.subtitle;
             // sin servidor configurado (paquete para jugar offline): no mostrar "ENTRAR AL SERVIDOR"
             if (string.IsNullOrEmpty(cfg.server)) btnServer.Visible = false;
+            MostrarServidores();
 
             if (!File.Exists(Path.Combine(Paths.GameDir, cfg.gameExe)))
             {
@@ -351,6 +359,9 @@ namespace CoDUOKit
                 return;
             }
 
+            LimpiarServerCache();
+            LimpiarCarpetasVacias();
+            RecortarLog();
             try { player = File.Exists(Paths.PlayerFile) ? Json.Read<Player>(Paths.PlayerFile) : null; } catch { player = null; }
             if (player != null) SyncFromGame(File.GetLastWriteTimeUtc(Paths.PlayerFile));
             if (player == null || string.IsNullOrEmpty(player.name)) AskName();
@@ -438,6 +449,138 @@ namespace CoDUOKit
         // Tabla r_mode del juego (el original llega al 12, el motor mejorado agrega los panoramicos hasta el 24)
         static readonly int[,] VidModes = { { 320, 240 }, { 400, 300 }, { 512, 384 }, { 640, 480 }, { 800, 600 }, { 960, 720 }, { 1024, 768 }, { 1152, 864 }, { 1280, 1024 }, { 1600, 1200 }, { 2048, 1536 }, { 856, 480 }, { 1920, 1200 },
             { 1280, 720 }, { 1280, 800 }, { 1366, 768 }, { 1440, 900 }, { 1600, 900 }, { 1680, 1050 }, { 1920, 1080 }, { 2560, 1440 }, { 2560, 1600 }, { 2880, 1800 }, { 3024, 1964 }, { 3456, 2234 } };
+
+        // "Server Cache" del motor mejorado (cl_serverCache): al entrar a cada servidor copiaba todos sus pk3 a
+        // server-cache\<servidor>\ (mas una copia por cada version publicada: 1,3 GB en una PC al 19-10-2026) y usaba
+        // ahi un uoconfig_mp.cfg aparte, asi que lo que se cambiaba jugando no aparecia en la config general.
+        // Con el launcher no hace falta (ya deja los archivos exactos del servidor): se apaga al jugar
+        // (+set cl_serverCache 0) y aca se pasa a la config general la de esa carpeta si es mas nueva y se borra todo.
+        void LimpiarServerCache()
+        {
+            string dir = Path.Combine(Paths.GameDir, "server-cache");
+            try
+            {
+                if (!Directory.Exists(dir)) return;
+                string masNueva = null;
+                foreach (var d in Directory.GetDirectories(dir))
+                {
+                    string c = Path.Combine(d, cfg.modDir, "uoconfig_mp.cfg");
+                    if (File.Exists(c) && (masNueva == null || File.GetLastWriteTimeUtc(c) > File.GetLastWriteTimeUtc(masNueva))) masNueva = c;
+                }
+                if (masNueva != null && (!File.Exists(ModCfg) || File.GetLastWriteTimeUtc(masNueva) > File.GetLastWriteTimeUtc(ModCfg)))
+                {
+                    if (File.Exists(ModCfg)) File.Copy(ModCfg, ModCfg + ".antes_server_cache", true);
+                    File.Copy(masNueva, ModCfg, true);
+                    File.SetLastWriteTimeUtc(ModCfg, File.GetLastWriteTimeUtc(masNueva));
+                    Log("Configuracion del juego tomada de " + masNueva.Substring(Paths.GameDir.Length + 1) + " (la ultima que usaste jugando).");
+                }
+                long bytes = 0;
+                foreach (var f in Directory.GetFiles(dir, "*", SearchOption.AllDirectories))
+                {
+                    try { bytes += new FileInfo(f).Length; File.SetAttributes(f, FileAttributes.Normal); } catch { }
+                }
+                Directory.Delete(dir, true);
+                string idx = Path.Combine(Paths.GameDir, "uoservercache.dat");
+                if (File.Exists(idx)) File.Delete(idx);
+                Log("Borrada la carpeta server-cache del motor mejorado (" + (bytes / 1048576) + " MB de copias repetidas).");
+            }
+            catch (Exception ex) { Log("No pude borrar server-cache (esta el juego abierto?): " + ex.Message); }
+        }
+
+        // ---- Limpieza automatica de lo que sobra (19-10-2026) ----
+        // Nombres de nuestros pk3 (versiones viejas que el launcher mueve a _cuarentena al publicar una nueva)
+        static readonly string[] PrefijosPropios = { "mimod_", "z_zzz_kit", "zzzzzz_kit" };   // poné aca el comienzo del nombre de TUS pk3
+        // Carpetas del juego que nunca se tocan aunque esten vacias
+        static readonly string[] CarpetasDelJuego = { "main", "uo", "miles", "pb", "docs", "uodocs", "_redist", "launcher" };
+
+        // _cuarentena: se borran las versiones viejas NUESTRAS (y las que repiten un archivo vigente).
+        // Lo que no es nuestro (algo que puso el jugador) queda ahi.
+        void LimpiarCuarentena(Manifest man)
+        {
+            if (man.managedDirs == null) return;
+            var vigentes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var f in man.files) vigentes.Add(Path.GetFileName(f.path));
+            foreach (var dir in man.managedDirs)
+            {
+                string q = Path.Combine(Paths.GameDir, dir.Replace('/', '\\'), "_cuarentena");
+                if (!Directory.Exists(q)) continue;
+                foreach (var f in Directory.GetFiles(q))
+                {
+                    string n = Path.GetFileName(f);
+                    bool propio = vigentes.Contains(n);
+                    foreach (var p in PrefijosPropios) if (n.StartsWith(p, StringComparison.OrdinalIgnoreCase)) propio = true;
+                    if (!propio) continue;
+                    try
+                    {
+                        long mb = new FileInfo(f).Length / 1048576;
+                        File.SetAttributes(f, FileAttributes.Normal);
+                        File.Delete(f);
+                        Log("Borrada version vieja de _cuarentena: " + n + " (" + mb + " MB)");
+                    }
+                    catch (Exception ex) { Log("No pude borrar " + n + ": " + ex.Message); }
+                }
+                try { if (Directory.GetFileSystemEntries(q).Length == 0) Directory.Delete(q); } catch { }
+            }
+        }
+
+        // uo\: pk3 identicos (mismo nombre y misma huella) a uno de nuestra lista en otra carpeta (ej. los mapas que
+        // la instalacion vieja ponia en uo\ y ahora estan en MiMod). Son copias que solo ocupan lugar.
+        void LimpiarRepetidosUo(Manifest man)
+        {
+            string uo = Path.Combine(Paths.GameDir, "uo");
+            if (!Directory.Exists(uo)) return;
+            var porNombre = new Dictionary<string, ManifestFile>(StringComparer.OrdinalIgnoreCase);
+            foreach (var f in man.files)
+                if (f.path.EndsWith(".pk3", StringComparison.OrdinalIgnoreCase) && !f.path.StartsWith("uo/", StringComparison.OrdinalIgnoreCase))
+                    porNombre[Path.GetFileName(f.path)] = f;
+            foreach (var pk3 in Directory.GetFiles(uo, "*.pk3"))
+            {
+                ManifestFile m;
+                if (!porNombre.TryGetValue(Path.GetFileName(pk3), out m)) continue;
+                try
+                {
+                    if (new FileInfo(pk3).Length != m.size) continue;
+                    if (!string.Equals(Sha256(pk3), m.sha256, StringComparison.OrdinalIgnoreCase)) continue;
+                    File.SetAttributes(pk3, FileAttributes.Normal);
+                    File.Delete(pk3);
+                    Log("Borrada copia repetida: uo\\" + Path.GetFileName(pk3) + " (" + (m.size / 1048576) + " MB, ya esta en " + m.path.Split('/')[0] + ")");
+                }
+                catch (Exception ex) { Log("No pude borrar uo\\" + Path.GetFileName(pk3) + ": " + ex.Message); }
+            }
+        }
+
+        // Carpetas vacias de servidores viejos en la carpeta del juego (solo si no tienen ningun archivo adentro)
+        void LimpiarCarpetasVacias()
+        {
+            try
+            {
+                foreach (var d in Directory.GetDirectories(Paths.GameDir))
+                {
+                    string n = Path.GetFileName(d);
+                    if (Array.IndexOf(CarpetasDelJuego, n.ToLowerInvariant()) >= 0 || string.Equals(n, cfg.modDir, StringComparison.OrdinalIgnoreCase)) continue;
+                    try
+                    {
+                        if (Directory.GetFiles(d, "*", SearchOption.AllDirectories).Length > 0) continue;
+                        Directory.Delete(d, true);
+                        Log("Borrada carpeta vacia: " + n);
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+        }
+
+        // launcher.log: si pasa 1 MB quedan las ultimas ~2000 lineas
+        static void RecortarLog()
+        {
+            try
+            {
+                if (!File.Exists(Paths.LogFile) || new FileInfo(Paths.LogFile).Length < 1048576) return;
+                var l = File.ReadAllLines(Paths.LogFile);
+                File.WriteAllLines(Paths.LogFile, l.Skip(Math.Max(0, l.Length - 2000)).ToArray());
+            }
+            catch { }
+        }
 
         // Si el juego guardo su config despues de la ultima vez que el launcher guardo la suya y hay diferencias
         // (resolucion, pantalla, FPS o nombre cambiados dentro del juego), el launcher toma los valores del juego.
@@ -725,10 +868,14 @@ namespace CoDUOKit
                 }
             }
 
+            LimpiarCuarentena(man);
+            LimpiarRepetidosUo(man);
+
             if (toFetch.Count == 0)
             {
                 Status("Todo al dia. Listo para jugar.", 100);
                 Log("Archivos verificados: todo correcto.");
+                MostrarServidores();
                 SelfUpdate();
                 return;
             }
@@ -774,6 +921,7 @@ namespace CoDUOKit
             }
             Status("Actualizacion terminada. Listo para jugar.", 100);
             Log("Actualizacion terminada.");
+            MostrarServidores();
             SelfUpdate();
         }
 
@@ -813,6 +961,65 @@ namespace CoDUOKit
         void Play()
         {
             Launch("");
+        }
+
+        // ---- Servidores (19-10-2026) ----
+        // Launcher\servidores.json se publica con la actualizacion (firmado como el resto), asi la lista de servidores
+        // le llega a todos sin tocar el config.json de cada uno. Ej.:
+        // [ {"nombre":"SERVIDOR 1","direccion":"123.45.67.89:28960"}, {"nombre":"SERVIDOR 2","direccion":"203.0.113.10:28960"} ]
+        // Sin ese archivo queda un solo boton con "server" de config.json, como antes.
+        class Servidor { public string nombre; public string direccion; }
+
+        static bool DireccionValida(string d)
+        {
+            return !string.IsNullOrEmpty(d) && System.Text.RegularExpressions.Regex.IsMatch(d, @"^[A-Za-z0-9.\-]{1,253}(:\d{1,5})?$");
+        }
+
+        void MostrarServidores()
+        {
+            if (InvokeRequired) { BeginInvoke(new Action(MostrarServidores)); return; }
+            List<Servidor> lista = null;
+            try
+            {
+                string f = Path.Combine(Paths.LauncherDir, "servidores.json");
+                if (File.Exists(f)) lista = Json.Read<List<Servidor>>(f);
+            }
+            catch (Exception ex) { Log("servidores.json invalido: " + ex.Message); }
+            if (lista != null) lista.RemoveAll(s => s == null || !DireccionValida(s.direccion));
+            if (lista == null || lista.Count == 0)
+            {
+                btnServer2.Visible = false;
+                return;
+            }
+            var tip = new ToolTip();
+            // posicion real del boton de siempre (Ui.Modernize ya corrio los controles por la barra de titulo)
+            if (baseServer == Point.Empty) baseServer = btnServer.Location;
+            server1 = lista[0].direccion;
+            btnServer.Text = string.IsNullOrEmpty(lista[0].nombre) ? "SERVIDOR 1" : lista[0].nombre;
+            btnServer.Visible = true;
+            tip.SetToolTip(btnServer, "Entrar a " + server1);
+            if (lista.Count > 1)
+            {
+                server2 = lista[1].direccion;
+                // dos botones lado a lado en el lugar del de siempre
+                btnServer.Location = baseServer; btnServer.Size = new Size(93, 38); btnServer.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
+                btnServer2.Location = new Point(baseServer.X + 97, baseServer.Y); btnServer2.Size = new Size(93, 38);
+                btnServer2.Text = string.IsNullOrEmpty(lista[1].nombre) ? "SERVIDOR 2" : lista[1].nombre;
+                btnServer2.Visible = true;
+                tip.SetToolTip(btnServer2, "Entrar a " + server2);
+            }
+            else
+            {
+                btnServer.Location = baseServer; btnServer.Size = new Size(190, 38);
+                btnServer2.Visible = false;
+            }
+        }
+
+        void EntrarServidor(int n)
+        {
+            string d = n == 2 ? server2 : (server1 ?? (string.IsNullOrEmpty(cfg.server) ? "123.45.67.89:28960" : cfg.server));
+            if (!DireccionValida(d)) return;
+            Launch(" +connect " + d);
         }
 
         void Practice()
@@ -1102,12 +1309,20 @@ namespace CoDUOKit
             SaveDisplay();
             // logfile 2: la consola se escribe al instante en MiMod\console_mp.log (sirve para diagnosticar cuelgues)
             string args = "+set fs_game " + cfg.modDir + " +set name \"" + player.name + "\" +set logfile 2";
-            // Texturas en calidad completa: el mod trae texturas DDS sin mipmaps y con r_picmip > 0
-            // el juego las achica en el procesador al cargar cada mapa (cargas de 20+ segundos).
-            args += " +set r_picmip 0 +set r_picmip2 0";
-            // Vsync apagado: con r_swapInterval 1 cada redibujado de la pantalla de carga espera al monitor
-            // y la carga de un mapa pasa de ~3,5 s a ~19 s (medido 12-10-2026). com_maxfps 85 ya limita los FPS.
-            args += " +set r_swapInterval 0";
+            // Graficos recomendados, SOLO la primera vez (antes se forzaban en cada arranque y pisaban lo que el
+            // jugador cambiaba en el menu de graficos del juego):
+            // - Texturas en calidad completa: el mod trae texturas DDS sin mipmaps y con r_picmip > 0
+            //   el juego las achica en el procesador al cargar cada mapa (cargas de 20+ segundos).
+            // - Vsync apagado: con r_swapInterval 1 cada redibujado de la pantalla de carga espera al monitor
+            //   y la carga de un mapa pasa de ~3,5 s a ~19 s (medido 12-10-2026). com_maxfps 85 ya limita los FPS.
+            if (player.video < 1)
+            {
+                args += " +set r_picmip 0 +set r_picmip2 0 +set r_swapInterval 0";
+                SetCfgCvars(new[] { "r_picmip", "0", "r_picmip2", "0", "r_swapInterval", "0" }, false);
+                player.video = 1;
+                try { Json.Write(Paths.PlayerFile, player); } catch { }
+                Log("Graficos recomendados aplicados (solo esta vez; despues se respeta lo que elijas en el juego).");
+            }
             // Contador de FPS del juego (arriba a la derecha)
             args += " +set cg_drawFPS " + (player.fps == "no" ? "0" : "1");
             // Idioma: si el juego detecta otra placa de video aplica la "configuracion optima" y vuelve cl_language
@@ -1135,7 +1350,8 @@ namespace CoDUOKit
                                     "r_fullscreen", player.display == "ventana" ? "0" : "1", "cg_drawFPS", player.fps == "no" ? "0" : "1", "name", player.name }, false);
             ApplyMotor();
             // Motor mejorado: brillo aplicado dentro del juego (no cambia el brillo del monitor)
-            if (UsingNewMotor()) args += " +set r_gammaMode 2 +set r_display " + MonitorIndex();
+            // cl_serverCache 0: sin copias por servidor ni config aparte (ver LimpiarServerCache)
+            if (UsingNewMotor()) args += " +set r_gammaMode 2 +set r_display " + MonitorIndex() + " +set cl_serverCache 0";
             args += extraArgs;
 
             // El juego crea el archivo oculto __CoDUOMP al arrancar y lo borra al salir bien.

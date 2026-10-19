@@ -353,6 +353,42 @@ def sonido(alias):
 # ------------------------------------------------------------------ armas
 NUEVO = {}
 
+# Sin retroceso, como las armas del mod base: retroceso (kick), dispersion (spread), balanceo (sway, bob) copiados
+# de esta arma del mod (la M4: todo en 0). Se aplica a todas las armas de Hardline del menu y sus modos alternativos;
+# no a las de las rachas (llevan "fijos"). REFERENCIA_SIN_RETROCESO = None deja el retroceso original de Hardline.
+REFERENCIA_SIN_RETROCESO = "svt40_mp"
+_SIN_RETROCESO = None
+
+
+def sin_retroceso():
+    global _SIN_RETROCESO
+    if _SIN_RETROCESO is None:
+        _SIN_RETROCESO = {}
+        if REFERENCIA_SIN_RETROCESO:
+            t = tf.leer("weapons/mp/" + REFERENCIA_SIN_RETROCESO).decode("latin-1").split("\\")
+            for k, v in zip(t[1::2], t[2::2]):
+                if re.search(r"(?i)kick|spread|sway|bob", k):
+                    _SIN_RETROCESO[k.lower()] = v
+            # claves que el arma de referencia no tiene pero Hardline si (dispersion apuntando agachado / cuerpo a tierra)
+            for k in ("adsspreadducked", "adsspreadprone"):
+                _SIN_RETROCESO.setdefault(k, _SIN_RETROCESO.get("adsspread", "0"))
+    return _SIN_RETROCESO
+
+
+def cargador(clave, v, kv):
+    """clipName/ammoName de un arma de Hardline.
+    - El motor exige el mismo tamano para un mismo cargador: no se comparten con las del juego (prefijo hl_).
+    - El motor manda al jugador solo ~63 cargadores y ~63 municiones distintos (contando los del juego):
+      con uno por arma, las ultimas en orden alfabetico (MP5-SD, UMP-45, SC-2010, ballesta, FAMAS) le
+      llegaban vacias al jugador (recarga sin fin; la ballesta cambiaba a la pistola). Por eso las balas
+      comparten cargador y municion segun el tamano del cargador (hl_c30 = todas las de 30), y los lanzadores
+      comparten cargador (hl_p1) pero no municion (cada uno tiene su maximo)."""
+    d = {kv[j].lower(): kv[j + 1] for j in range(0, len(kv) - 1, 2)}
+    tam = d.get("clipsize", "0")
+    if d.get("weapontype", "bullet").lower() == "bullet":
+        return "hl_c" + tam
+    return ("hl_p" + tam) if clave == "clipname" else ("hl_" + v)
+
 
 def arma(w, fijos=None, cambios=None):
     """weapons/mp/<w> de Hardline -> weapons/mp/hl_<w>.
@@ -371,13 +407,15 @@ def arma(w, fijos=None, cambios=None):
         if fijos and k in fijos:
             kv[i + 1] = fijos[k]
             continue
+        if fijos is None and kl in sin_retroceso():
+            kv[i + 1] = sin_retroceso()[kl]
+            continue
         if cambios and k in cambios:
             v = kv[i + 1] = cambios[k]
         if not v or v.lower() == "none":
             continue
         if kl in ("clipname", "ammoname"):
-            # el motor exige el mismo tamano para un mismo cargador/municion: los de Hardline van aparte
-            kv[i + 1] = "hl_" + v
+            kv[i + 1] = cargador(kl, v, kv)
         elif kl == "altweapon":
             kv[i + 1] = arma(v) if ("weapons/mp/" + v) in hl else v
         elif "model" in kl:
@@ -429,7 +467,6 @@ def gsc_soldados():
     return ("\r\n// Soldados modernos de Hardline en vez de los de la Segunda Guerra (scr_hl_soldados 0 = originales)\r\n"
             "soldados()\r\n{\r\n\tif(apagado())\r\n\t\treturn;\r\n" + rachas + "\tif(getcvar(\"scr_hl_soldados\") == \"0\")\r\n\t\treturn;\r\n"
             + rama("allies", "allies", ["american", "british", "russian"]) + rama("axis", "axis", ["german"]) + "}\r\n")
-
 
 # ------------------------------------------------------------------ scripts
 def gsc_kit_hl(todas):

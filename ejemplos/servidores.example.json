@@ -1,0 +1,4 @@
+[
+  { "nombre": "SERVIDOR 1", "direccion": "123.45.67.89:28960" },
+  { "nombre": "SERVIDOR 2", "direccion": "203.0.113.10:28960" }
+]

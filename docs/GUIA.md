@@ -214,6 +214,18 @@ privado/                github.json con tus tokens  ⚠️ NUNCA lo publiques
    - Para pasar a firma a jugadores que ya tienen el launcher: generá las claves, publicá el launcher nuevo (`.nuevo`) **y** el `config.json` con `publicKey` dentro de `maestro\Launcher\`. Las versiones viejas del launcher no miran la firma y se actualizan solas.
    - El launcher además rechaza cualquier ruta que intente escribir fuera de la carpeta del juego (`..`, `C:\...`).
 
+6. **Varios servidores (opcional).** El campo `"server"` de `config.json` da un solo botón y vive en la PC de cada jugador: para cambiarlo hay que repartir el archivo de nuevo. La alternativa es publicar la lista de servidores como un archivo más: poné `maestro\Launcher\servidores.json` (partí de [`ejemplos/servidores.example.json`](../ejemplos/servidores.example.json)) y publicá:
+   ```json
+   [
+     { "nombre": "SERVIDOR 1", "direccion": "123.45.67.89:28960" },
+     { "nombre": "SERVIDOR 2", "direccion": "203.0.113.10:28960" }
+   ]
+   ```
+   - Con dos servidores, el botón de siempre se divide en **dos botones** lado a lado, con el texto de `"nombre"` (corto: unos 12 caracteres). Pasando el mouse se ve la dirección.
+   - Viaja **firmado** como el resto de la actualización: para cambiar una IP o el texto de un botón, editás el archivo y publicás. No hay que recompilar ni tocar el `config.json` de nadie.
+   - Sin `servidores.json`, todo sigue como antes (un botón con `"server"`). Direcciones con caracteres raros se ignoran.
+   - **Servidor en tu casa:** si el servidor 2 está en tu red, desde esa misma red no se entra con la IP pública salvo que el router haga *hairpin NAT* (también llamado *NAT loopback*). Sin eso, desde tu casa usá la IP interna (`connect 192.168.x.x`).
+
 ## 9. Paso 5 — Publicar actualizaciones
 
 ```
@@ -298,7 +310,7 @@ Además: elegir **monitor**, brillo aplicado **dentro del juego** (no cambia el 
 | Botón / opción | Qué hace |
 |---|---|
 | **JUGAR** | Abre el juego con el mod |
-| **ENTRAR AL SERVIDOR** | Abre el juego y se conecta directo |
+| **ENTRAR AL SERVIDOR** / **SERVIDOR 1 y 2** | Abre el juego y se conecta directo (dos botones si publicás `servidores.json`, ver [paso 4](#8-paso-4--compilar-y-configurar-el-launcher)) |
 | **PRÁCTICA** | Servidor local con bots (modo, mapa, bots por equipo, dificultad, puntería) |
 | **TOP DEL MES** | Ranking mensual de bajas y partidas ganadas |
 | **Teclas** | Editor de teclas (lee/escribe los `bind` de `uoconfig_mp.cfg`) |
@@ -309,9 +321,15 @@ Además: elegir **monitor**, brillo aplicado **dentro del juego** (no cambia el 
 Además, en cada arranque:
 - Borra la marca `__CoDUOMP` (evita el cartel de "Modo Seguro").
 - Fuerza el **idioma** correcto (`cl_language`; ver [problemas](#16-problemas-conocidos-y-soluciones)).
-- Abre el juego con `r_swapInterval 0` (cargas de mapa ~5 veces más rápidas) y texturas en calidad completa.
+- La **primera vez** abre el juego con `r_swapInterval 0` (cargas de mapa ~5 veces más rápidas) y texturas en calidad completa. Después respeta lo que cada uno elija en el menú de gráficos del juego (antes se forzaba en cada arranque y pisaba esos cambios).
 - Restaura el **brillo del monitor** si el juego se cierra mal.
 - Le da el **foco** a la ventana del juego (si no, el mouse no responde en la práctica).
+- **Limpia lo que sobra** (todo queda anotado en `launcher.log`):
+  - **`server-cache` del motor HD**: ese motor copia todos los pk3 de cada servidor a `server-cache\<servidor>\` (una copia más por cada versión que publicás: en una PC llegó a 1,3 GB) y guarda ahí otra `uoconfig_mp.cfg`, así que lo que se cambiaba jugando no aparecía en la configuración general. Con el launcher no hace falta: lo apaga (`+set cl_serverCache 0`), pasa a la configuración general la de `server-cache` si es más nueva (copia: `uoconfig_mp.cfg.antes_server_cache`) y borra la carpeta y `uoservercache.dat`.
+  - **`_cuarentena`**: borra las versiones viejas de **tus** pk3 (por el comienzo del nombre: `PrefijosPropios` en `CoDUOKitLauncher.cs`). Lo que no es tuyo (algo que puso el jugador) queda ahí.
+  - **`uo\`**: borra los pk3 **idénticos** (mismo nombre y huella SHA-256) a uno de tu lista que está en la carpeta del mod: las copias que dejaban las instalaciones viejas.
+  - **Carpetas vacías** de servidores viejos en la carpeta del juego (nunca `main`, `uo`, `miles`, `pb`, `Docs`, `UODocs`, `_Redist`, `Launcher` ni la del mod).
+  - `launcher.log`: si pasa 1 MB, deja las últimas 2000 líneas.
 
 ![Teclas](../imagenes/teclas.png)
 
@@ -572,6 +590,8 @@ Esto vale para sumar armas de **cualquier** mod. Leelo antes de empezar:
 
 - **Máximo 127 archivos de armas** en total (juego + mod + pk3 de práctica). Si te pasás, sale `Max number of weapons allowed is 127, found N`. Con esta herramienta quedan ~112 en el servidor y ~123 con el pk3 de práctica (sus armas `bwalk_*` también cuentan).
 - **Mismo `clipName` / `ammoName` = misma capacidad.** Si dos armas comparten cargador o munición con distinta capacidad, el servidor no arranca (`Clip Size mismatch`). Por eso las armas nuevas llevan cargador y munición con prefijo propio.
+- **Unos 63 cargadores y 63 municiones distintos como máximo** (contando los del juego y tu mod). Pasado ese número, el servidor arranca sin ningún error, pero las armas que quedan últimas en orden alfabético **le llegan al jugador sin balas**: recarga sin fin, o el arma de un solo tiro (la ballesta) cambia a la pistola después del primer disparo. Con un cargador propio por arma, Hardline llegaba a 68. Por eso `Armar_Hardline.py` agrupa: las armas de balas comparten cargador y munición **según el tamaño del cargador** (`hl_c30` = todas las de 30), y los lanzadores comparten cargador (`hl_p1`) pero no munición, porque cada uno tiene su máximo. Así quedan ~50. El efecto visible: si llevás dos armas de Hardline con el mismo tamaño de cargador, comparten las balas de reserva. Para contar los tuyos, recorré `weapons/mp/*` de todos tus pk3 y sumá los `clipName` y `ammoName` distintos.
+- **Sin retroceso (opcional en el código):** `Armar_Hardline.py` copia el retroceso, la dispersión y el balanceo de un arma de tu mod (`REFERENCIA_SIN_RETROCESO`) a todas las armas nuevas, para que se sientan como las que ya tenés. Si querés el retroceso original de Hardline, vaciá esa variable.
 - **Servidor LINUX: prefijo que ordene después de todo.** Las armas nuevas tienen que llamarse con un prefijo que quede **después** de todas las armas del juego en orden alfabético (`zhl_`). Con `hl_` el servidor Linux no arrancaba (`BG_IndexForString: unknown token 'kar98k_sniper_mp' (mp/playeranim.script)`) mientras el servidor Windows andaba perfecto; al renombrar se arregló. **Lección: probá siempre en el servidor Linux real y leé su consola (por ejemplo `screenlog.0` por SFTP) ANTES de publicar a los jugadores.**
 - **Límite de modelos por mapa.** `G_ModelIndex: overflow` sale cuando el mapa + las armas + los modelos de soldados pasan el límite del motor. Lo resolvimos con menos variantes de soldado (2 por nación) y apagando todo en los mapas que igual se pasan (`MAPAS_SIN_HL`).
 - **Prioridad de pk3:** los nombres se comparan en mayúsculas, de mayor a menor, y `_` le gana a las letras (por eso `z_ebus...` le gana a `zzzz...`). `z_zzz_kit_hardline` le gana a `z_zzz_kit_armas` porque `H` > `A`, y así sus menús pisan a los del pk3 de armas.
