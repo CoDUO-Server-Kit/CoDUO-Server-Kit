@@ -18,3 +18,5 @@ ultimo_manifest.json
 _vista_previa/
 *.ico
 __pycache__/
+mods_terceros/
+herramientas/hardline_miniaturas/

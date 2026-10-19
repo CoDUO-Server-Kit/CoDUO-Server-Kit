@@ -29,6 +29,7 @@ Creado por **Leandro Guzman** en colaboración con un grupo de técnicos aficion
 17. [Seguridad](#17-seguridad)
 18. [Tareas comunes](#18-tareas-comunes)
 19. [Compilar y armar cada pieza](#19-compilar-y-armar-cada-pieza)
+20. [Sumar armas, soldados y rachas de otro mod (ejemplo: Hardline)](#20-sumar-armas-soldados-y-rachas-de-otro-mod-ejemplo-hardline)
 
 ---
 
@@ -109,6 +110,7 @@ maestro/MiMod/          TODOS los archivos que reciben los jugadores (pk3, pract
 maestro/Launcher/       CoDUOKitLauncher.exe.nuevo (así se auto-actualizan los launchers) y motor HD opcional
 servidor/MiMod/         Copia local de server.cfg y awe.cfg del servidor
 fixes_src/, armas_src/  Tus archivos propios que van dentro de pk3 (scripts arreglados, armas)
+mods_terceros/          pk3 de otros mods que usa Armar_Hardline.py (nunca se publican)
 privado/                github.json con tus tokens  ⚠️ NUNCA lo publiques
 ```
 
@@ -321,6 +323,8 @@ Diseño: ventanas sin la barra de Windows, bordes redondeados, botones redondead
 - **Un pk3 de un mapa no es solo de ese mapa**: sus archivos (armas, scripts, menús) aplican a **todos** los mapas. Un pack de mapas puede convertir un rifle en lanzacohetes en todo el servidor. Por eso existe `Auditar_Conflictos.py`.
 - **sv_pure** compara las huellas de los pk3 del servidor; los pk3 extra del jugador se ignoran (por eso el pk3 de práctica no molesta online).
 - **Errores de script en Linux tiran el servidor**. Archivos de armas que en Windows andan pueden tirar el servidor Linux en `map_restart`: probá en los dos.
+- **Máximo 127 archivos de armas** en total (juego + mod + pk3 de práctica). Si te pasás: `Max number of weapons allowed is 127, found N`.
+- **Armas nuevas en Linux**: tienen que llamarse con un prefijo que quede **después** de todas las armas del juego en orden alfabético (por ejemplo `zhl_`). Con otro prefijo el servidor Linux puede no arrancar aunque en Windows ande. Detalles en [§20.5](#205-reglas-del-motor-que-descubrimos).
 - **GSC (scripts de CoD)**: no existen `int()` ni `issubstr()`; `println` no escribe sin modo desarrollador (usá `logprint`). Los nombres de variables **no distinguen mayúsculas** (`G` y `g` son la misma).
 
 ## 16. Problemas conocidos y soluciones
@@ -362,11 +366,12 @@ Diseño: ventanas sin la barra de Windows, bordes redondeados, botones redondead
 | Cambiar la configuración del servidor | Editar `servidor\MiMod\server.cfg` / `awe.cfg` → subir → reiniciar → `Generar_Practica_cfg.ps1` → publicar |
 | Agregar un mapa | Copiar el pk3 a `maestro\MiMod` y al servidor → agregarlo a tu `mp/CoDmaps.arena` → `Anular_Arenas_Repetidas.py` + `Armar_Pk3.py armas` → `Auditar_Conflictos.py` (total 0) → reiniciar → publicar |
 | Actualizar el launcher | `launcher\build.bat` → copiar a `maestro\Launcher\CoDUOKitLauncher.exe.nuevo` → publicar |
+| Sumar las armas, soldados y rachas de Hardline | Los 4 pk3 de Hardline en `mods_terceros\` → `Armar_Pk3.py armas` → `Armar_Hardline.py` → probar en local → subir al servidor + reiniciar → leer la consola → publicar ([§20](#20-sumar-armas-soldados-y-rachas-de-otro-mod-ejemplo-hardline)) |
 | Cambiar el anti-camper | En `awe.cfg`: `awe_anticamp_time` (segundos quieto) y `awe_anticamp_marktime` (duración de la marca) |
 
 ## 19. Compilar y armar cada pieza
 
-Todo se hace en Windows, desde la carpeta del proyecto (abrí una consola ahí: en el Explorador, escribí `cmd` en la barra de dirección). **Orden recomendado la primera vez:** launcher → parche → pk3 de arreglos → pk3 de armas → pk3 de práctica → config de práctica → auditoría → publicar → top del mes.
+Todo se hace en Windows, desde la carpeta del proyecto (abrí una consola ahí: en el Explorador, escribí `cmd` en la barra de dirección). **Orden recomendado la primera vez:** launcher → parche → pk3 de arreglos → pk3 de armas → pk3 de práctica → (opcional) pk3 de Hardline → config de práctica → auditoría → publicar → top del mes.
 
 ### 19.1 Launcher
 
@@ -378,7 +383,7 @@ launcher\build.bat
 - **Genera:** `launcher\CoDUOKitLauncher.exe` (un solo exe, sin dependencias).
 - **Para usarlo:** copialo a `<carpeta del juego>\Launcher\` junto con un `config.json` (partí de `ejemplos\config.example.json`).
 - **Ícono (opcional):** si querés un ícono, agregá `/win32icon:mi_icono.ico` a la línea de `csc` en `build.bat`.
-- **Para que se actualice solo en los jugadores:** copialo a `maestro\Launcher\CoDUOKitLauncher.exe.nuevo` y publicá (ver 19.8).
+- **Para que se actualice solo en los jugadores:** copialo a `maestro\Launcher\CoDUOKitLauncher.exe.nuevo` y publicá (ver 19.9).
 
 ### 19.2 Parche (instalar o reemplazar el launcher)
 
@@ -443,7 +448,18 @@ python herramientas\Auditar_Conflictos.py
 - **Necesita:** los pk3 en `maestro\MiMod\`. Editá en el script la lista `MOD` con los nombres de los pk3 de tu mod.
 - **Muestra:** el orden de prioridad de los pk3 y qué archivos de un pk3 de mapas **pisan** al mod. Tiene que dar `total: 0` antes de publicar.
 
-### 19.8 Publicar a GitHub
+### 19.8 pk3 de Hardline (servidor y jugadores, opcional)
+
+```
+python herramientas\Armar_Hardline.py
+```
+
+- **Necesita:** el pk3 de armas armado antes (19.4: parte de sus menús de armas) y los 4 pk3 de eBus Hardline en `mods_terceros\` (al lado de `herramientas\`). Opcional: miniaturas en `herramientas\hardline_miniaturas\`.
+- **Genera:** `maestro\MiMod\z_zzz_kit_hardline.pk3` con 27 armas modernas, soldados modernos, la racha Harrier y la pestaña **HARDLINE** en los menús de armas.
+- **Opciones:** `--juego`, `--mods`, `--maestro` y `--salida` cambian las carpetas sin editar el script.
+- **Después:** subilo al servidor, reiniciá y **leé la consola del servidor Linux** antes de publicar. Todo el detalle en [§20](#20-sumar-armas-soldados-y-rachas-de-otro-mod-ejemplo-hardline).
+
+### 19.9 Publicar a GitHub
 
 ```
 herramientas\Publicar_Actualizacion.bat
@@ -453,7 +469,7 @@ herramientas\Publicar_Actualizacion.bat
 - **Sube:** todo lo que hay en `maestro\` (solo lo que cambió), borra del release lo que ya no está y sube el `manifest.json` al final. Si existe `privado\firma_privada.dat` (de `Generar_Claves.ps1`), lo firma y sube también `manifest.sig`; si no, avisa `sin firma`.
 - **Opción:** `powershell -File herramientas\Publicar_Actualizacion.ps1 -Forzar` vuelve a subir todo.
 
-### 19.9 Top del mes
+### 19.10 Top del mes
 
 ```
 pip install paramiko pynacl
@@ -471,3 +487,113 @@ python estadisticas\poner_secretos.py
 - `poner_secretos.py` guarda la conexión SFTP como **secretos cifrados** del repo (permiso **Secrets**). Nunca quedan en el código.
 - Para probarlo a mano: con las mismas variables `set`, corré `python estadisticas\actualizar_estadisticas.py`.
 - En GitHub, pestaña **Actions** → *Estadisticas* → *Run workflow* lo corre al instante; después corre solo cada 30 minutos.
+
+## 20. Sumar armas, soldados y rachas de otro mod (ejemplo: Hardline)
+
+**eBus Hardline** es un mod para CoD UO estilo *Modern Warfare 2*, hecho por **eBus** (*ebusiangamers*) para el clan **RRMS Snipers Clan** (sus scripts `_riris_*` son de **Riris**, de RRMS). Trae armas, soldados y rachas de bajas modernas, pero como mod entero no sirve para un servidor público (ver [20.4](#204-qué-no-tomamos-de-hardline-y-por-qué)).
+
+`herramientas\Armar_Hardline.py` toma **su contenido** (armas, modelos, sonidos, soldados) y lo suma a tu mod basado en AWE **sin usar sus scripts**. El resultado es **un solo pk3**, `z_zzz_kit_hardline.pk3`, que va **al servidor y a los jugadores**. Es un ejemplo: la misma idea sirve para sumar contenido de otro mod.
+
+### 20.1 Qué agrega
+
+1. **27 armas de Hardline** + sus modos de disparo alternativos = **32 archivos de armas**, renombrados con el prefijo `zhl_`:
+
+   | Categoría | Armas |
+   |---|---|
+   | Asalto | M4A1, SCAR-H, Steyr AUG, ARX-160, CM-901, ACR, Peacekeeper, FAD, FN2000, FAMAS, SA-80 |
+   | Compactas | Honey Badger, G36C SD, MP7, MP5 SD, UMP-45, SC-2010 |
+   | Tirador | Intervention, Intervention 2, IA-2, G-28, Ballesta |
+   | Pesadas | PKP Pecheneg, Minigun, Bazooka, Panzerfaust, Panzerschreck |
+
+   Los modelos, animaciones, texturas, íconos, efectos y alias de sonido que **chocan** con tu mod o con el juego se renombran (con prefijo `hl_`, o dentro de los modelos binarios con un nombre del mismo largo), así tus armas siguen viéndose y sonando igual. `clipName` y `ammoName` también llevan prefijo. Los alias de sonido se agregan al final del `generic_mp_sound.csv` de tu mod, porque el `soundloadspec` de **todos** los mapas carga ese archivo.
+2. **Menú de armas:** una pestaña **HARDLINE** nueva en los 4 menús de armas de los bandos (en español y por defecto), con 4 categorías (Asalto, Compactas, Tirador, Pesadas), miniaturas en 3 columnas y un panel al costado con **daño, cargador, cadencia y movilidad** (leídos de cada archivo de arma). Para entrar en el presupuesto de ítems del menú, la categoría, el nombre y los datos se muestran con ítems de texto por cvar (`ui_hl_cat`, `ui_hl_nombre`, `ui_hl_datos`): los menús quedan con ~101 ítems (el límite es más alto que 96).
+3. **Parches mínimos a los scripts de tu mod:**
+   - `_teams.gsc`: precache de las armas, `restrict()` acepta las `zhl_` (con `scr_allow_hardline 0` quedan desactivadas) y las funciones de munición, granadas y nombre tratan cada `zhl_` como el arma original que reemplaza (por `_kit_hl::base()`).
+   - `_rank_gmi.gsc` y `_bocoutility.gsc`: lo mismo para munición con *battle rank* y cargadores.
+   - `_kit_hl.gsc` (nuevo): lista de armas, precache y equivalencias.
+4. **Soldados modernos**, 2 por nación, elegidos al azar en cada aparición (se engancha al final de `_teams::modeltype()`):
+
+   | Nación | Soldados |
+   |---|---|
+   | Americanos | Delta Force, US Army |
+   | Británicos | SAS asalto, SAS operaciones especiales |
+   | Rusos | Spetsnaz asalto, Spetsnaz paracaidista |
+   | Alemanes (eje) | Milicia, bandidos |
+
+5. **Racha HARRIER** (reescrita desde el `_harrier.gsc` de Hardline, sin depender de nada de Hardline):
+   - Se gana con **7 bajas seguidas en una misma vida**.
+   - Se activa **manteniendo USAR 1,5 segundos**, quieto, en el piso y **a cielo abierto** (no usamos MELEE porque AWE lo usa para levantar armas).
+   - El jugador pasa a una **cámara aérea con el cañón de 40 mm durante 30 segundos**, con el modelo real del **AV-8B** que venía escondido en el pk3 de armas de Hardline.
+   - Arreglamos dos errores de Hardline: el jugador **moría por la caída** al terminar, y faltaba el modelo del avión (apuntaba a modelos de Star Wars que no venían en el mod).
+   - **Racha LOKI** (cámara satelital con los tres cañones del AC-130, 20 segundos): incluida pero **apagada** por defecto. En Hardline duraba 6 segundos por un error.
+   - Las bajas se cuentan envolviendo `level.callbackPlayerKilled`, `callbackPlayerDamage` y `callbackPlayerDisconnect` desde `_kit_hl` (no se toca `_awe.gsc`). Scripts: `_kit_rachas.gsc`, `_kit_racha_loki.gsc`, `_kit_racha_harrier.gsc`.
+6. **Mapas donde se apaga solo:** en algunos mapas el mapa + las armas + los modelos de soldados pasan el límite de modelos del motor. Esos mapas van en la lista `MAPAS_SIN_HL` del script y ahí se juega con el mod tal cual. Hay que probar mapa por mapa (ver [20.6](#206-cómo-lo-probamos)); en nuestro caso fueron 6.
+
+### 20.2 Requisitos y uso
+
+- Tu mod basado en **AWE** en `maestro\MiMod\` y el pk3 de armas armado antes (`Armar_Pk3.py armas`): el script parte de los menús de armas de `z_zzz_kit_armas.pk3`.
+- Los **4 pk3 de Hardline** en `mods_terceros\` (carpeta al lado de `herramientas\`): `z_ebus_hardline_main.pk3`, `z_ebus_hardline_sound.pk3`, `z_ebus_hardline_svr.pk3` y `zz_ebus_hardline_weapons.pk3`. **No** van a `maestro\` ni al servidor.
+- Opcional: **miniaturas** del menú en `herramientas\hardline_miniaturas\hl_<arma>.tga` (256x128, RGBA, fondo transparente). Sin ellas el menú usa botones de texto.
+
+```
+python herramientas\Armar_Pk3.py armas
+python herramientas\Armar_Hardline.py
+```
+
+Genera `maestro\MiMod\z_zzz_kit_hardline.pk3`. Con `--juego`, `--mods`, `--maestro` y `--salida` cambiás las carpetas sin editar el script. Si volvés a armar el pk3 de armas, volvé a correr los dos.
+
+### 20.3 Configuración (cvars en `server.cfg`)
+
+| Cvar | Por defecto | Qué hace |
+|---|---|---|
+| `scr_allow_hardline` | `1` | `0` = las armas de Hardline no se pueden elegir |
+| `scr_hl_soldados` | `1` | `0` = soldados originales de la Segunda Guerra |
+| `scr_racha_harrier` | `7` | Bajas seguidas para ganar el Harrier (`0` = apagado) |
+| `scr_racha_harrier_tiempo` | `30` | Segundos que dura el Harrier |
+| `scr_racha_loki` | `0` | Bajas seguidas para ganar el Loki (`0` = apagado; por ejemplo `5` para activarlo) |
+| `scr_racha_loki_tiempo` | `20` | Segundos que dura el Loki |
+| `scr_racha_proteger` | `1` | `1` = el jugador no recibe daño mientras está en el aire |
+
+### 20.4 Qué NO tomamos de Hardline y por qué
+
+Primero levantamos Hardline solo, tal cual, para ver qué hace. Como mod entero **no sirve** para un servidor público:
+
+- Sus scripts están **incompletos**: faltan 9 scripts, y las armas de los bots no vienen (son de MeatBot).
+- Menús con **errores de sintaxis**.
+- 7 rachas llaman a funciones que **no existen** (`markObjectOnCompass`, `doreaper`), y el generador de rachas quedó fijo en una sola opción.
+- Muchísimos **errores de script** en tiempo de juego en sus modos (Zombies tira cientos por minuto) y CTF **se cae** (desborde de *configstrings*).
+- Su sistema de bots hace que **el primer jugador que entra ejecute `rcon exec` con la clave rcon del servidor** para reiniciarlo. En un servidor público eso es inaceptable.
+
+Por eso nos quedamos con **las armas y los soldados**, y **reescribimos 2 rachas** (Harrier y Loki).
+
+### 20.5 Reglas del motor que descubrimos
+
+Esto vale para sumar armas de **cualquier** mod. Leelo antes de empezar:
+
+- **Máximo 127 archivos de armas** en total (juego + mod + pk3 de práctica). Si te pasás, sale `Max number of weapons allowed is 127, found N`. Con esta herramienta quedan ~112 en el servidor y ~123 con el pk3 de práctica (sus armas `bwalk_*` también cuentan).
+- **Mismo `clipName` / `ammoName` = misma capacidad.** Si dos armas comparten cargador o munición con distinta capacidad, el servidor no arranca (`Clip Size mismatch`). Por eso las armas nuevas llevan cargador y munición con prefijo propio.
+- **Servidor LINUX: prefijo que ordene después de todo.** Las armas nuevas tienen que llamarse con un prefijo que quede **después** de todas las armas del juego en orden alfabético (`zhl_`). Con `hl_` el servidor Linux no arrancaba (`BG_IndexForString: unknown token 'kar98k_sniper_mp' (mp/playeranim.script)`) mientras el servidor Windows andaba perfecto; al renombrar se arregló. **Lección: probá siempre en el servidor Linux real y leé su consola (por ejemplo `screenlog.0` por SFTP) ANTES de publicar a los jugadores.**
+- **Límite de modelos por mapa.** `G_ModelIndex: overflow` sale cuando el mapa + las armas + los modelos de soldados pasan el límite del motor. Lo resolvimos con menos variantes de soldado (2 por nación) y apagando todo en los mapas que igual se pasan (`MAPAS_SIN_HL`).
+- **Prioridad de pk3:** los nombres se comparan en mayúsculas, de mayor a menor, y `_` le gana a las letras (por eso `z_ebus...` le gana a `zzzz...`). `z_zzz_kit_hardline` le gana a `z_zzz_kit_armas` porque `H` > `A`, y así sus menús pisan a los del pk3 de armas.
+- **Presupuesto de ítems de los menús:** cada menú tiene un límite de ítems; con ~101 no vimos problemas, pero conviene no sumar de más (por eso los textos van por cvar).
+
+### 20.6 Cómo lo probamos
+
+El método sirve para cualquier cambio grande:
+
+- **Instalación de prueba aparte**, con *hard links* a los archivos del juego (no ocupa espacio extra) y el motor original copiado de `motor\original` del launcher.
+- Un **servidor dedicado oculto** con `logfile 2` para leer los errores.
+- **pk3 de prueba** (nunca publicados) con rutinas GSC que usan **bots** para elegir cada arma desde el menú (`menuresponse`), comprobar que la tienen en la mano y registrar una baja por `callbackPlayerDamage` (verificando la línea `K;` del registro, la que usa el top del mes).
+- **Capturas solo de la ventana del juego** con `PrintWindow` (nunca del escritorio).
+- **Miniaturas:** fotografiamos cada arma en el juego con `r_drawworld 0` y `r_clear 1` (fondo rosa liso), pasamos ese color a transparente y las espejamos.
+- Un **script que levanta el servidor en cada mapa** del mod para encontrar desbordes del límite de modelos, comparando **con y sin** el pk3 nuevo para separar las fallas que ya existían.
+- Antes de todo, levantamos **Hardline solo** para ver qué hace: necesitó 9 scripts de relleno y las armas de MeatBot (MeatBot completo + Hardline pasa las 127 armas).
+
+### 20.7 Lista para ponerlo en el servidor
+
+1. **Armar:** `Armar_Pk3.py armas` → `Armar_Hardline.py`.
+2. **Probar en local:** un servidor local con el pk3 nuevo; elegir armas de cada categoría, ganar una racha, revisar el registro.
+3. **Subir** `z_zzz_kit_hardline.pk3` al servidor (a la carpeta del mod).
+4. **Reiniciar** el servidor.
+5. **Leer la consola del servidor Linux** (`screenlog.0` o la del panel): sin `script compile error`, `Max number of weapons`, `Clip Size mismatch`, `BG_IndexForString` ni `G_ModelIndex: overflow`. Cambiá a algunos mapas de la rotación y mirá de nuevo.
+6. **Publicar a los jugadores** (`Publicar_Actualizacion.bat`). Nunca antes del paso 5: si el servidor no arranca, los jugadores quedan con un pk3 que el servidor no tiene.

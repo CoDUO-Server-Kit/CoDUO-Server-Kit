@@ -10,7 +10,7 @@
 
 ## Descargar y jugar ya
 
-En **[Releases](https://github.com/CoDUO-Server-Kit/CoDUO-Server-Kit/releases/latest)** está el **paquete listo para jugar** (`CoDUO-Server-Kit-Paquete.zip`): launcher + mod T-FBB + mapas + bots de práctica + motor HD.
+En **[Releases](https://github.com/CoDUO-Server-Kit/CoDUO-Server-Kit/releases/latest)** está el **paquete listo para jugar** (`CoDUO-Server-Kit-Paquete.zip`): launcher + mod T-FBB + mapas + bots de práctica + motor HD + **armas, soldados y la racha Harrier de eBus Hardline** (pestaña HARDLINE en el menú de armas).
 
 1. Tené instalado Call of Duty + United Offensive **1.51** (original; el paquete no trae el juego).
 2. Copiá el contenido del zip **dentro de la carpeta del juego** (donde está `CoDUOMP.exe`).
@@ -26,6 +26,7 @@ Instrucciones completas dentro del zip (`LEEME.txt`). Para montar **tu propio se
 - **Top del mes**: una tarea de GitHub Actions lee cada 30 minutos el registro de partidas del servidor; el launcher muestra quién hizo más bajas y ganó más partidas, y se reinicia cada mes.
 - **Botón Reparar** y arreglos automáticos de los problemas clásicos de UO: textos `EXE_...` (idioma), cartel de "Modo Seguro", cargas lentas (sincronización vertical), monitor blanco (brillo), mouse sin foco.
 - **Motor HD opcional**: cambia entre el motor original y un motor alternativo de 64 bits (no incluido), guardando copia de los originales.
+- **Armas modernas de otro mod (ejemplo: eBus Hardline)**: `Armar_Hardline.py` suma a tu mod AWE 27 armas modernas con su pestaña en el menú, soldados modernos y la racha **Harrier** (7 bajas seguidas) reescrita, **sin usar los scripts** del otro mod. Se puede apagar por cvar o por mapa ([guía §20](docs/GUIA.md#20-sumar-armas-soldados-y-rachas-de-otro-mod-ejemplo-hardline)).
 - **Herramientas**: armado de pk3, auditoría de conflictos entre pk3, publicador de releases y un parche para launchers viejos.
 
 | Top del mes | Práctica con bots |
@@ -56,6 +57,7 @@ Todo se hace desde la carpeta del proyecto, en Windows. Los detalles están en l
 | **Parche** | `parche\build_parche.bat` | El launcher compilado antes | `Output\Parche_Launcher_CoDUOKit.exe` (lleva el launcher adentro) |
 | **pk3 de arreglos** | `python herramientas\Armar_Pk3.py fixes` | El pk3 de tu mod (AWE) en `maestro\MiMod\` | `maestro\MiMod\zzzzzz_kit_fixes.pk3` (va al servidor y a los jugadores) |
 | **pk3 de armas** | `python herramientas\Armar_Pk3.py armas` | Tus archivos en `armas_src\weapons\mp\` | `maestro\MiMod\z_zzz_kit_armas.pk3` (servidor y jugadores) |
+| **pk3 de Hardline** (opcional) | `python herramientas\Armar_Hardline.py` (después de `Armar_Pk3.py armas`) | Los 4 pk3 de eBus Hardline en `mods_terceros\` | `maestro\MiMod\z_zzz_kit_hardline.pk3` (servidor y jugadores) |
 | **pk3 de práctica (bots)** | `python herramientas\Armar_Pk3.py practica` | El pk3 de arreglos armado antes + el juego instalado | `maestro\MiMod\zzzzzz_kit_practica.pk3` (solo jugadores) |
 | **Config de la práctica** | `powershell -File herramientas\Generar_Practica_cfg.ps1` | `servidor\MiMod\server.cfg` y `awe.cfg` | `maestro\MiMod\practica.cfg` |
 | **Mapas sin repetir** | `python herramientas\Anular_Arenas_Repetidas.py` (y después `Armar_Pk3.py armas`) | Tu lista general `mp/CoDmaps.arena` en un pk3 de `maestro\MiMod\` | `armas_src\mp\*.arena` vacíos: cada mapa aparece una sola vez |
@@ -97,4 +99,4 @@ GPL v3 — ver [LICENSE](LICENSE). Las partes derivadas de otros mods (el script
 
 ## English summary
 
-**CoDUO Server Kit** is a complete toolkit to run a private Call of Duty: United Offensive 1.51 community server with a custom mod: a self-updating launcher (C#, .NET 4, Windows 7+) that syncs your mod from a private GitHub release using a SHA-256 manifest, optionally RSA-signed so only your private key can push updates; a locked-down server (`sv_pure 1`, downloads off); bot practice on any map with bots that build their own navigation graph at load time; a monthly leaderboard updated by GitHub Actions; one-click repair of classic UO issues; an optional HD-engine switch; and the publishing tools behind it. Requirements and build steps are in the tables above; the full guide is in Spanish ([docs/GUIA.md](docs/GUIA.md)). Created by **Leandro Guzman** with GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro and Sr-Oscuro, with the help of AI tools. It contains only the kit's own code (GPL v3) — no game files, mods, maps or engine.
+**CoDUO Server Kit** is a complete toolkit to run a private Call of Duty: United Offensive 1.51 community server with a custom mod: a self-updating launcher (C#, .NET 4, Windows 7+) that syncs your mod from a private GitHub release using a SHA-256 manifest, optionally RSA-signed so only your private key can push updates; a locked-down server (`sv_pure 1`, downloads off); bot practice on any map with bots that build their own navigation graph at load time; a monthly leaderboard updated by GitHub Actions; one-click repair of classic UO issues; an optional HD-engine switch; a tool that adds another mod's content to an AWE-based mod without its scripts (example: 27 modern weapons, modern soldiers and a rewritten Harrier killstreak from eBus Hardline, plus the engine rules we found: max 127 weapon files, Linux needs new weapon names that sort after the stock ones); and the publishing tools behind it. Requirements and build steps are in the tables above; the full guide is in Spanish ([docs/GUIA.md](docs/GUIA.md)). Created by **Leandro Guzman** with GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro and Sr-Oscuro, with the help of AI tools. It contains only the kit's own code (GPL v3) — no game files, mods, maps or engine. The ready-to-play package in *Releases* includes third-party content (mod, maps, HD engine, eBus Hardline weapons) with credits.

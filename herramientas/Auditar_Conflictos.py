@@ -21,7 +21,7 @@ for prio, n in enumerate(pk3s):
                 continue
             files[info.filename.lower()].append((prio, n, hashlib.md5(z.read(info.filename)).hexdigest()))
 
-MOD = {"MiMod_v1.pk3", "MiMod_parche.pk3", "zzzzzz_kit_fixes.pk3", "z_zzz_kit_armas.pk3", "zzzzzz_kit_practica.pk3"}
+MOD = {"MiMod_v1.pk3", "MiMod_parche.pk3", "z_zzz_kit_hardline.pk3", "zzzzzz_kit_fixes.pk3", "z_zzz_kit_armas.pk3", "zzzzzz_kit_practica.pk3"}
 importantes = (".gsc", "weapons/", ".menu", ".shader", "vehicles/", ".str", ".csv", ".cfg", "xmodel/", ".efx")
 print("\nArchivos que un pk3 de MAPAS le pisa al MOD (contenido distinto):")
 n_conf = 0

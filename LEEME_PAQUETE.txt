@@ -36,6 +36,33 @@ SOBRE EL MOTOR HD
 - No esta firmado digitalmente: Windows o el antivirus pueden avisar la primera vez.
 - Si tenes Windows de 32 bits la casilla no aparece (el motor HD es de 64 bits).
 
+ARMAS MODERNAS, SOLDADOS Y RACHAS (eBus Hardline)
+-------------------------------------------------
+El paquete trae z_zzz_kit_hardline.pk3, armado con contenido del mod "eBus Hardline"
+(de eBus / ebusiangamers para el clan RRMS Snipers Clan).
+- Menu de armas: pestana HARDLINE con 27 armas modernas en 4 categorias (Asalto,
+  Compactas, Tirador, Pesadas). Al costado se ven el dano, el cargador, la cadencia
+  y la movilidad de cada una.
+- Soldados modernos: 2 por bando (Delta Force, US Army, SAS, Spetsnaz, milicia,
+  bandidos), uno al azar cada vez que apareces.
+- Racha HARRIER: hace 7 bajas seguidas sin morir. Despues, quieto, en el piso y a
+  cielo abierto, MANTENE APRETADA la tecla USAR 1,5 segundos: pasas a una camara
+  aerea con el canon de 40 mm durante 30 segundos. Mientras estas en el aire no
+  recibis dano.
+- Racha LOKI (camara satelital con los canones del AC-130): viene APAGADA.
+- En algunos mapas (los que pasan el limite de modelos del juego) todo esto se apaga
+  solo y se juega con el mod tal cual.
+
+Para apagar cosas en un servidor (en server.cfg):
+    set scr_allow_hardline "0"          // sin armas de Hardline
+    set scr_hl_soldados "0"             // soldados originales de la Segunda Guerra
+    set scr_racha_harrier "0"           // sin Harrier (por defecto 7 bajas)
+    set scr_racha_harrier_tiempo "30"   // segundos que dura el Harrier
+    set scr_racha_loki "5"              // activar el Loki con 5 bajas (por defecto 0 = apagado)
+    set scr_racha_proteger "0"          // que el jugador SI reciba dano en el aire
+Si el servidor es Linux, despues de subir el pk3 y reiniciar, lee la consola del
+servidor antes de jugar (ver docs/GUIA.md, seccion 20).
+
 COMPROBAR QUE EL PAQUETE ES EL ORIGINAL
 ---------------------------------------
 Los programas no estan firmados digitalmente. Bajalo solo de la pagina de Releases del
@@ -69,6 +96,8 @@ CREDITOS Y AVISO
 ----------------
 El mod T-FBB es de Team FunBallerBurg (www.funballerburg.de), basado en AWE de Bell.
 Los mapas son de sus respectivos autores (ver CREDITOS.md). El motor HD es de brague.
+Las armas, soldados y el modelo del Harrier son de eBus Hardline (eBus / ebusiangamers,
+RRMS Snipers Clan; scripts _riris_* de Riris). Las rachas fueron reescritas para el kit.
 Call of Duty es de Activision. Este paquete no tiene relacion oficial con ninguno de ellos.
 Si sos autor de algo incluido y no queres que este aca, avisanos (abri un "issue" en
 GitHub) y lo sacamos.

@@ -16,7 +16,7 @@ Este kit existe gracias al trabajo de muchas personas de la comunidad de Call of
 
 > ¿Sos autor de algo listado como "desconocido" o falta tu nombre? Abrí un *issue* y lo corregimos.
 >
-> **Paquete listo para jugar:** en la sección *Releases* hay un paquete que incluye el mod, los mapas y el motor HD de sus autores, con estos créditos. Si sos autor de algo incluido y **no querés que esté**, abrí un *issue* y lo sacamos.
+> **Paquete listo para jugar:** en la sección *Releases* hay un paquete que incluye el mod, los mapas, el motor HD y el contenido de eBus Hardline de sus autores, con estos créditos. Si sos autor de algo incluido y **no querés que esté**, abrí un *issue* y lo sacamos.
 
 ---
 
@@ -32,6 +32,7 @@ Este kit existe gracias al trabajo de muchas personas de la comunidad de Call of
 | **MeatBot** (CoD2) | **Maks Deryabin** (*Spec*) | Ideas de movimiento suave (`linkto` + `moveto`) y animación de caminar con armas especiales |
 | **CoD1 & CoD:UO MeatBot v0.2** (port) | **ATB** (port, código y waypoints); **Cepe7a**, **asdfg** (código adicional); **Dobriy** (servidor dedicado) | Referencia para portar las ideas de MeatBot a UO |
 | **PeZBOT** | **Perry Hart** | Sistema de waypoints en el que se inspira MeatBot |
+| **Rachas Harrier y Loki** de **eBus Hardline** (`_harrier.gsc`, `_loki.gsc`) | **eBus** (*ebusiangamers*) | `Armar_Hardline.py` genera `_kit_racha_harrier.gsc` y `_kit_racha_loki.gsc`, reescritos a partir de esas rachas (sin depender de los scripts de Hardline) |
 
 ### Créditos que AWE reconoce en su código
 
@@ -47,6 +48,11 @@ Ravir (morteros, hitblip, cvardef, primeros auxilios, herramientas de admin) · 
 | Herramientas de admin (`_user_Ravir_admin.gsc`) | **Ravir** |
 | Motor alternativo **"Open CoD:UO 1.51"** (opcional, 64 bits) | **brague** |
 | Textos y menús en español del juego | Activision (versión en español) |
+| **eBus Hardline** (armas modernas, soldados, modelos, sonidos) | **eBus** (*ebusiangamers*) para el clan **RRMS Snipers Clan**; scripts `_riris_*` de **Riris** (RRMS) |
+
+> **Paquete listo para jugar:** incluye, armados por `Armar_Hardline.py` en `z_zzz_kit_hardline.pk3`, las armas, los soldados y el modelo del Harrier de eBus Hardline, con estos créditos. Si sos uno de sus autores y no querés que estén, abrí un *issue* y los sacamos.
+>
+> Las armas de **MeatBot** se usaron solo en pruebas locales (para levantar Hardline completo) y **no** se reparten.
 
 ### Mapas
 
