@@ -1,0 +1,40 @@
+[Unit]
+Description=Servidor de CoD UO 1.51
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=@USUARIO@
+Group=@USUARIO@
+UMask=0002
+WorkingDirectory=@DIR@
+# 2 = internet (se anuncia en la lista publica). 1 = solo red local (para probar).
+Environment=DEDICATED=2
+# Environment=MAPA=mp_uo_harbor
+ExecStart=@DIR@/arrancar.sh
+StandardInput=null
+Restart=always
+RestartSec=5
+Nice=-5
+# Encierro: solo puede escribir en su carpeta, sin privilegios ni acceso al resto del sistema
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=@DIR@
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_INET AF_UNIX
+MemoryMax=1536M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

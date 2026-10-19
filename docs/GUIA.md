@@ -30,6 +30,7 @@ Creado por **Leandro Guzman** en colaboración con un grupo de técnicos aficion
 18. [Tareas comunes](#18-tareas-comunes)
 19. [Compilar y armar cada pieza](#19-compilar-y-armar-cada-pieza)
 20. [Sumar armas, soldados y rachas de otro mod (ejemplo: Hardline)](#20-sumar-armas-soldados-y-rachas-de-otro-mod-ejemplo-hardline)
+21. [Servidor propio en tu casa (Debian Linux, sin panel)](#21-servidor-propio-en-tu-casa-debian-linux-sin-panel)
 
 ---
 
@@ -115,6 +116,8 @@ privado/                github.json con tus tokens  ⚠️ NUNCA lo publiques
 ```
 
 ## 5. Paso 1 — El servidor (Linux / TCAdmin)
+
+> ¿Sin hosting? Con una PC vieja o una mini PC en tu casa también se puede: ver la [sección 21](#21-servidor-propio-en-tu-casa-debian-linux-sin-panel).
 
 1. **Subí la carpeta del mod** (por ejemplo `MiMod`) a la raíz del juego en el servidor, al lado de `main` y `uo`, por SFTP (FileZilla, WinSCP).
 2. **Obligatorio en Linux:** dentro de `MiMod` tiene que estar `game.mp.uo.i386.so` (el módulo de juego para Linux, viene con el servidor 1.51). Sin él el servidor no carga los scripts del mod.
@@ -617,3 +620,140 @@ El método sirve para cualquier cambio grande:
 4. **Reiniciar** el servidor.
 5. **Leer la consola del servidor Linux** (`screenlog.0` o la del panel): sin `script compile error`, `Max number of weapons`, `Clip Size mismatch`, `BG_IndexForString` ni `G_ModelIndex: overflow`. Cambiá a algunos mapas de la rotación y mirá de nuevo.
 6. **Publicar a los jugadores** (`Publicar_Actualizacion.bat`). Nunca antes del paso 5: si el servidor no arranca, los jugadores quedan con un pk3 que el servidor no tiene.
+
+## 21. Servidor propio en tu casa (Debian Linux, sin panel)
+
+Lo que hicimos para pasar de un hosting con TCAdmin a una **mini PC en casa**: una Celeron J3355 de 2 núcleos y 4 GB de RAM alcanza y sobra. El servidor de UO usa unos **170 MB de RAM**, y con 20 jugadores **4 a 5 Mbps de subida**. Sin panel: Debian liviano, un servicio que arranca solo y un firewall. Los archivos están en [`servidor_linux/`](../servidor_linux/) e [`instalar.sh`](../servidor_linux/instalar.sh) hace casi todo.
+
+| Necesitás | Detalle |
+|---|---|
+| Una PC prendida las 24 h | 64 bits, 2 GB de RAM o más, conectada **por cable**. Un UPS chico ayuda |
+| Internet | Lo que importa es la **subida** (unos 0,2 Mbps por jugador). Mejor IP pública fija; sin IP fija sirve un DNS dinámico |
+| Que no haya CGNAT | Si tu proveedor te comparte la IP pública con otros clientes, no se puede abrir un puerto. Cómo comprobarlo: punto 21.6 |
+| Router | Que permita redirigir un puerto UDP |
+
+### 21.1 Instalar Debian
+
+1. Bajá la imagen **netinst** de Debian 13 (amd64) de [debian.org](https://www.debian.org/distrib/netinst) y comprobá su huella con el `SHA256SUMS` de la misma página. Pasala a un pendrive con Rufus o balenaEtcher.
+2. Instalá eligiendo **"Install"** (la no gráfica). Contraseña de **root vacía**, así tu usuario queda con `sudo`.
+3. En **"Selección de programas"**: **destildá** el entorno de escritorio y GNOME; **tildá** "Servidor SSH" y "Utilidades estándar del sistema". Nada más.
+
+Debian recién instalado usa unos 150 a 200 MB de RAM, contra 400 a 500 MB de Ubuntu Server, que trae `snapd` corriendo siempre. Para un servidor de juegos que queda prendido sin tocarlo, Debian es más liviano y cambia menos.
+
+### 21.2 Si `apt update` falla (repositorios mal configurados)
+
+Nos pasó: después de instalar, `apt update` daba `404 Not Found` y `does not have a Release file`. La lista de repositorios había quedado apuntando a `www.debian.org` (la página web, no el repositorio) y a `bookworm` (la versión anterior). Como root:
+
+```
+rm -f /etc/apt/sources.list.d/*
+nano /etc/apt/sources.list
+```
+
+Dejalo **exactamente** con las 3 líneas de [`servidor_linux/sources.list`](../servidor_linux/sources.list) (Ctrl+K borra una línea; Ctrl+O y Enter guarda; Ctrl+X sale):
+
+```
+deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
+deb http://deb.debian.org/debian trixie-updates main contrib non-free non-free-firmware
+deb http://security.debian.org/debian-security trixie-security main contrib non-free non-free-firmware
+```
+
+Después `apt update && apt upgrade -y`.
+- Si dice `Could not resolve deb.debian.org`, falta el DNS: dejá `/etc/resolv.conf` con la línea `nameserver 8.8.8.8` y repetí.
+- Con `printf` ojo con el `%s`: si se escribe literal, la lista queda con `http://%s/...` y tampoco anda.
+
+### 21.3 Tu usuario con sudo y acceso por SSH
+
+Como root (cambiá `usuario` por el tuyo):
+```
+apt install -y sudo openssh-server
+usermod -aG sudo usuario
+ip a
+```
+Cerrá la sesión y volvé a entrar para que tome el grupo; `sudo whoami` tiene que responder `root`. En `ip a` buscá `inet 192.168.x.x`: esa es la IP de la PC en tu red. **Reservala en el router** (reserva DHCP por MAC) para que no cambie. Desde ahí administrás por SSH desde tu PC (`ssh usuario@192.168.x.x`, o PuTTY), y para pasar archivos sirve WinSCP o FileZilla en modo SFTP.
+
+### 21.4 El servidor de UO para Linux
+
+Es gratuito: el **CoD:UO Linux Server 1.51b** que publicó Activision en 2005. El paquete **`coduo-lnxded-1.51b-large.tar.bz2`** (369 MB) trae todo lo necesario, sin instalar antes la 1.5. Está en [ModDB](https://www.moddb.com/games/call-of-duty-united-offensive/addons/linux-server-1-51b-full). ModDB tiene un control anti-robots, así que se baja desde el navegador. Antes de usarlo, mirá adentro: tiene que haber `coduo_lnxded`, el `README`, `uo/game.mp.uo.i386.so`, 3 `.dll` y los pk3, nada más.
+
+| Qué | Dónde va | De dónde sale |
+|---|---|---|
+| `coduo_lnxded` (el programa) | `/srv/coduo/` | El paquete 1.51b |
+| `game.mp.uo.i386.so` | `/srv/coduo/MiMod/` (**obligatorio** en la carpeta del mod) | El paquete 1.51b (`uo/`) |
+| `main/*.pk3` y `uo/*.pk3` | `/srv/coduo/main/` y `/srv/coduo/uo/` | Tu juego instalado (o tu servidor anterior) |
+| Tu mod (pk3, `server.cfg`, `awe.cfg`) | `/srv/coduo/MiMod/` | Tu carpeta `maestro\` y [`ejemplos/server.cfg`](../ejemplos/server.cfg) |
+
+Si venís de un hosting, lo más rápido es copiar servidor a servidor (`lftp` en la PC nueva baja todo por SFTP del hosting): así queda **idéntico** al que ya funciona y `sv_pure` deja entrar a los mismos jugadores.
+
+El programa es de 32 bits y está compilado con gcc 3.2: necesita `libstdc++.so.5`, que Debian ya no trae. La baja `instalar.sh` del archivo `gcc3-libs.tar.bz2` de [icculus.org](https://icculus.org/updates/cod/), y el arranque la usa con `LD_LIBRARY_PATH` sin instalarla en el sistema. Para comprobar que no le falta nada: `LD_LIBRARY_PATH=/srv/coduo/lib ldd /srv/coduo/coduo_lnxded` (ninguna línea tiene que decir `not found`).
+
+### 21.5 Instalación automática
+
+Copiá la carpeta `servidor_linux` a la PC (por ejemplo a `/tmp/servidor_linux`) y corré:
+```
+sudo env MOD=MiMod RED_CASA=192.168.1.0/24 bash /tmp/servidor_linux/instalar.sh
+```
+
+| Paso | Qué hace |
+|---|---|
+| 1 | Agrega la arquitectura `i386` e instala las librerías de 32 bits, `nftables` y las actualizaciones automáticas |
+| 2 | Crea el usuario **`coduo`**, sin consola ni sudo: el servidor corre con él. Tu usuario queda en su grupo para editar archivos |
+| 3 | Baja `libstdc++.so.5` a `/srv/coduo/lib` |
+| 4 | Crea `/srv/coduo/arrancar.sh` |
+| 5 | Crea el servicio **`coduo`** de systemd: arranca con la PC y se reinicia solo si se cae (5 s) |
+| 6–7 | Ajustes de red del sistema ([`90-servidor.conf`](../servidor_linux/90-servidor.conf)) y parches de seguridad automáticos |
+| 8 | Firewall ([`nftables.conf`](../servidor_linux/nftables.conf)), con **red de seguridad**: si te deja afuera de SSH, se quita solo a los 3 minutos. Abrí otra conexión SSH y, si entra, `sudo touch /tmp/firewall.ok` |
+
+Variables: `DIR` (`/srv/coduo`), `MOD`, `PUERTO` (28960), `SERVICIO` (`coduo`), `RED_CASA`, `FIREWALL=0` para no tocar el firewall, `ADMIN` (tu usuario). Se puede volver a correr: no rompe lo que ya está. Lo probamos instalando una segunda copia en otra carpeta y otro puerto al lado de un servidor andando.
+
+Al terminar te dice qué archivos faltan copiar (punto 21.4). Con todo en su lugar:
+
+```
+sudo systemctl start coduo          # arrancar (stop / restart)
+systemctl status coduo              # ver si está andando
+tail -f /srv/coduo/MiMod/console_mp_server.log    # la consola en vivo
+```
+
+Detalles que aprendimos:
+- **Primer mapa.** Con `sv_mapRotation ""` (repetir el mismo mapa hasta que voten otro), `+map_rotate` no tiene qué elegir y el servidor **no carga ningún mapa** (`Server is not running`). Por eso `arrancar.sh` arranca con `+map` (`MAPA`, por defecto `mp_uo_harbor`); en TCAdmin lo hacía el panel.
+- **`dedicated 1`** = solo red local (no se anuncia; aparece en la pestaña **LAN** del juego): ideal para probar. **`dedicated 2`** = internet. Se cambia en `/etc/systemd/system/coduo.service` (`Environment=DEDICATED=`) y después `sudo systemctl daemon-reload && sudo systemctl restart coduo`.
+- **No le pases nada por la entrada estándar.** Si lo arrancás a mano desde un script, usá `</dev/null`: el servidor lee comandos de su entrada y se "come" el resto del script.
+- **Encierro del servicio:** solo puede escribir en `/srv/coduo` (`ProtectSystem=strict`), sin privilegios nuevos, sin ver `/home`, con 1,5 GB de RAM como máximo. Si alguien aprovechara un fallo de este programa de 2005, no llega al resto del sistema.
+- `fs_homepath` = `fs_basepath`: los registros (`games_mp.log`, el que lee el [top del mes](#12-top-del-mes-estadísticas)) quedan dentro de la carpeta del mod y no en `~/.callofduty`.
+
+### 21.6 Router: abrir el puerto
+
+1. **Comprobá que no haya CGNAT**: en la PC, `curl -4 ifconfig.me` te da tu IP pública. Entrá al router y mirá su IP de internet (WAN): **tiene que ser la misma**. Si la del router empieza con `100.64` a `100.127`, `10.` o `192.168.`, estás detrás de otra red y hay que pedirle al proveedor una IP pública.
+2. Redirigí **solo** el puerto **UDP 28960** a la IP interna de la PC. **No** abras SSH (22) ni nada más.
+3. Pasá el servidor a `dedicated 2` y comprobá que aparece en la lista: el maestro de Activision **le hace una consulta desde afuera** antes de listarlo, así que si aparece, el puerto quedó bien abierto. Para mirar la lista sin el juego: mandale `\xff\xff\xff\xffgetservers 22 full empty` por UDP a `coduomaster.activision.com:20610` y buscá tu IP en la respuesta (cada servidor son 6 bytes: IP y puerto).
+
+**Desde tu misma casa** no vas a ver el servidor en la lista de internet ni vas a poder entrar con la IP pública: el pedido sale y tiene que volver a entrar por el mismo router, y la mayoría no hace esa vuelta. No es una falla. Desde tu casa entrá con `connect 192.168.x.x` o por la pestaña **LAN**, o agregá en el router la regla de **hairpin NAT** (*NAT loopback*). En MikroTik, por ejemplo (con tu IP pública y la interna):
+```
+/ip firewall nat add chain=dstnat dst-address=TU_IP_PUBLICA protocol=udp dst-port=28960 action=dst-nat to-addresses=192.168.1.50 to-ports=28960 comment="COD hairpin"
+/ip firewall nat add chain=srcnat src-address=192.168.1.0/24 dst-address=192.168.1.50 protocol=udp dst-port=28960 action=masquerade comment="COD hairpin"
+```
+Solo afecta al tráfico UDP 28960 que va a tu propia IP pública; el resto de la red no cambia. Efecto secundario: el servidor ve a todos los jugadores de tu casa con la IP del router. Para probar desde afuera de verdad: la PC conectada al wifi del celular (con la red de casa desconectada del todo).
+
+Para que el launcher tenga un botón para este servidor sin tocar la PC de nadie, usá `servidores.json` ([paso 4](#8-paso-4--compilar-y-configurar-el-launcher)).
+
+### 21.7 Seguridad
+
+| Capa | Qué cubre |
+|---|---|
+| **Firewall** (nftables) | Desde internet solo entra el puerto del juego. SSH y ping, solo desde tu red |
+| **Límite de consultas** | Máximo 8 consultas "sin conexión" por segundo por IP (ráfaga de 16); las partidas no se ven afectadas. Evita que usen tu servidor para **amplificar** ataques contra otros (la respuesta de `getstatus` es mucho más grande que la pregunta) y frena a quien pruebe claves de rcon. Para comprobarlo: 40 consultas seguidas tienen que dar ~16 respuestas |
+| **Servicio encerrado** | Usuario propio sin sudo; solo escribe en su carpeta |
+| **Sistema** | Parches de seguridad automáticos; ajustes contra paquetes con remitente falso |
+| **Router** | Si lo permite, límites por IP también ahí y la PC del servidor en una **red aparte** (VLAN o red de invitados), para que no vea tus otras PCs |
+| **Claves** | Contraseña de rcon nueva y larga. Si alguna clave anduvo por un chat o un correo, cambiala (`passwd` para la de Linux) |
+| **Sin descargas** | `sv_pure 1`, `sv_allowDownload 0`, `sv_wwwDownload 0` y ningún servidor web en la PC: solo entra quien tiene tus pk3 |
+
+**Lo que no se puede frenar desde tu casa:** un DDoS grande. Si alguien satura tu conexión, se llena la línea antes de llegar a la PC, y en tu casa se cae internet mientras dure. Lo frenan el proveedor (algunos filtran o te cambian la IP) o un intermediario con protección: un servidor virtual barato con protección anti-DDoS que reciba a los jugadores y los pase a tu casa por un túnel (WireGuard), así nadie conoce tu IP real.
+
+### 21.8 ¿Y un panel como Pterodactyl?
+
+[Pterodactyl](https://pterodactyl.io/) es gratis y da lo mismo que TCAdmin (consola web, archivos, usuarios con permisos), pero en una PC chica no conviene:
+- El panel (PHP, base de datos, Redis, servidor web) más Docker y Wings usan **0,8 a 1,2 GB de RAM** todo el tiempo, más que el servidor de UO lleno.
+- No hay plantilla (*egg*) oficial para CoD UO: habría que armar una imagen de Docker con las librerías de 32 bits y `libstdc++.so.5`.
+- Para usarlo desde afuera hay que publicar el panel en internet desde tu casa.
+
+Tiene sentido con varios juegos (por ejemplo CoD UO, CoD 2 y CS 1.6) en una PC de **4 núcleos y 8 a 16 GB** (un Ryzen 3 3200G o una mini PC N100 alcanzan), y varias personas administrando.

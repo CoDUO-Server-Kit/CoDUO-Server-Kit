@@ -38,6 +38,15 @@ Este kit existe gracias al trabajo de muchas personas de la comunidad de Call of
 
 Ravir (morteros, hitblip, cvardef, primeros auxilios, herramientas de admin) · Pharao_FS (bombarderos) · Parts (paracaídas, trazadoras, relámpagos; Total War 2.3a) · Chris P (pantalla de dolor y sangrado; Merciless Blood Mod) · RedMercury y Hellspawn (MG42 y PTRS41 móviles) · Poolmaster (soltar el arma al recibir un tiro en el brazo; Poolmaster's Realism Mod) · Pethron · Hellspawn (rebote de objetos) · Vicool · Zeus[BTY] · #7 (Number 7) · [MW]gitman · DirtyRat · DetPak · Innocent Bystander (Conquest TDM, arreglos de exploits) · Scrumby · Groundpounder · Frenchy Daddy · NC-17 (votación de mapas; reworked by wizard220, modified by FrAnCkY55) · CEAL mod-team · Bits.
 
+## Servidor propio en Linux (guía §21 y `servidor_linux/`)
+
+| Qué | Autor(es) | Cómo se usa |
+|---|---|---|
+| **CoD:UO Linux Server 1.51b** (`coduo_lnxded`, `game.mp.uo.i386.so`) | **Activision** (versión beta gratuita, 2005) | El servidor dedicado para Linux. **No incluido**: se baja de [ModDB](https://www.moddb.com/games/call-of-duty-united-offensive/addons/linux-server-1-51b-full) |
+| **Servidores Linux de Call of Duty** y `gcc3-libs.tar.bz2` (`libstdc++.so.5`) | **Ryan C. Gordon** ([icculus.org](https://icculus.org/)) | Hizo y mantuvo los servidores Linux de la serie y aloja la librería vieja que necesitan; `instalar.sh` la baja de ahí |
+| **ModDB** | [moddb.com](https://www.moddb.com/) | Conserva la descarga del servidor 1.51b |
+| **Debian GNU/Linux**, **nftables**, **systemd** | Proyecto Debian y sus comunidades | Sistema, firewall y servicio que usa la guía |
+
 ## Contenido que usó la comunidad donde nació el kit (no incluido)
 
 ### Mod
