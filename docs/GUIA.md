@@ -703,7 +703,7 @@ sudo env MOD=MiMod RED_CASA=192.168.1.0/24 bash /tmp/servidor_linux/instalar.sh
 | 6–7 | Ajustes de red del sistema ([`90-servidor.conf`](../servidor_linux/90-servidor.conf)) y parches de seguridad automáticos |
 | 8 | Firewall ([`nftables.conf`](../servidor_linux/nftables.conf)), con **red de seguridad**: si te deja afuera de SSH, se quita solo a los 3 minutos. Abrí otra conexión SSH y, si entra, `sudo touch /tmp/firewall.ok` |
 
-Variables: `DIR` (`/srv/coduo`), `MOD`, `PUERTO` (28960), `SERVICIO` (`coduo`), `RED_CASA`, `FIREWALL=0` para no tocar el firewall, `ADMIN` (tu usuario). Se puede volver a correr: no rompe lo que ya está. Lo probamos instalando una segunda copia en otra carpeta y otro puerto al lado de un servidor andando.
+Variables: `DIR` (`/srv/coduo`), `MOD`, `PUERTO` (28960), `SERVICIO` (`coduo`), `RED_CASA`, `FIREWALL=0` para no tocar el firewall, `ADMIN` (tu usuario). Se puede volver a correr: no rompe lo que ya está. Lo probamos instalando una segunda copia en otra carpeta y otro puerto al lado de un servidor andando. **Ojo si hacés eso:** copiá los archivos de verdad, no con enlaces (`cp -al`). El script le da la carpeta a su usuario (`chown -R`), y con enlaces eso también cambia los archivos del servidor original: a nosotros nos dejó el servidor sin poder leer su mod hasta que lo devolvimos con `sudo chown -R coduo:coduo /srv/coduo`.
 
 Al terminar te dice qué archivos faltan copiar (punto 21.4). Con todo en su lugar:
 
