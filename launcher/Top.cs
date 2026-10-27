@@ -27,15 +27,18 @@ namespace CoDUOKit
         string actualizado = "";
 
         Label lblTitle, lblSub, lblPrev, lblMsg;
-        Button btnAnt, btnSig;
+        Button btnAnt, btnSig, tabBajas, tabCabeza;
         RankPanel pnlKills, pnlWins;
+        bool verCabeza;
+        const string TextoBajas = "Se reinicia el 1ro de cada mes. Bajas: sin suicidios ni compa\u00F1eros. Ganada: la partida termina (por puntaje o por tiempo) y vos ganaste (DM) o tu equipo gan\u00F3 (TDM, CTF...). Suma todos los servidores. Se actualiza cada 30 minutos.";
+        const string TextoCabeza = "Cada impacto en la cabeza cuenta, mate o no (sin compa\u00F1eros de equipo ni a uno mismo). DIO: los que le pegaste a otros. RECIBI\u00D3: los que te pegaron a vos. Suma todos los servidores. Se actualiza cada 30 minutos.";
 
         public TopForm(GitHub gh, string myName)
         {
             this.gh = gh;
             this.myName = myName ?? "";
             Text = "Top del mes - " + Brand.Name;
-            ClientSize = new Size(660, 504);
+            ClientSize = new Size(660, 540);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false; MinimizeBox = false;
             StartPosition = FormStartPosition.CenterParent;
@@ -49,20 +52,33 @@ namespace CoDUOKit
             btnAnt.Click += delegate { if (idx > 0) { idx--; ShowMonth(); } };
             btnSig.Click += delegate { if (idx < orden.Count - 1) { idx++; ShowMonth(); } };
 
-            pnlKills = new RankPanel("MAS BAJAS", "bajas", this.myName) { Location = new Point(20, 80), Size = new Size(305, 330) };
-            pnlWins = new RankPanel("MAS PARTIDAS GANADAS", "ganadas", this.myName) { Location = new Point(335, 80), Size = new Size(305, 330) };
+            // pestanas: bajas y ganadas / tiros a la cabeza
+            tabBajas = Tab("BAJAS Y GANADAS", 20);
+            tabCabeza = Tab("TIROS A LA CABEZA", 335);
+            tabBajas.Click += delegate { verCabeza = false; if (idx >= 0) ShowMonth(); };
+            tabCabeza.Click += delegate { verCabeza = true; if (idx >= 0) ShowMonth(); };
 
-            lblPrev = new Label { ForeColor = Fg, AutoSize = false, Size = new Size(620, 22), Location = new Point(20, 418), TextAlign = ContentAlignment.MiddleCenter };
+            pnlKills = new RankPanel("M\u00C1S BAJAS", "bajas", this.myName) { Location = new Point(20, 116), Size = new Size(305, 330) };
+            pnlWins = new RankPanel("M\u00C1S PARTIDAS GANADAS", "ganadas", this.myName) { Location = new Point(335, 116), Size = new Size(305, 330) };
+
+            lblPrev = new Label { ForeColor = Fg, AutoSize = false, Size = new Size(620, 22), Location = new Point(20, 454), TextAlign = ContentAlignment.MiddleCenter };
             lblMsg = new Label
             {
-                Text = "Se reinicia el 1ro de cada mes. Bajas: sin suicidios ni companeros. Ganada: la partida termina (por puntaje o por tiempo) y vos ganaste (DM) o tu equipo gano (TDM, CTF...). Se actualiza cada 30 minutos.",
-                ForeColor = Muted, AutoSize = false, Size = new Size(530, 48), Location = new Point(20, 444), Font = new Font("Segoe UI", 8.25f)
+                Text = TextoBajas,
+                ForeColor = Muted, AutoSize = false, Size = new Size(530, 48), Location = new Point(20, 480), Font = new Font("Segoe UI", 8.25f)
             };
-            var close = new RoundButton { Text = "Cerrar", DialogResult = DialogResult.Cancel, Location = new Point(560, 452), Size = new Size(80, 30), FlatStyle = FlatStyle.Flat, BackColor = Panel, ForeColor = Fg };
+            var close = new RoundButton { Text = "Cerrar", DialogResult = DialogResult.Cancel, Location = new Point(560, 488), Size = new Size(80, 30), FlatStyle = FlatStyle.Flat, BackColor = Panel, ForeColor = Fg };
             CancelButton = close;
-            Controls.AddRange(new Control[] { lblTitle, lblSub, btnAnt, btnSig, pnlKills, pnlWins, lblPrev, lblMsg, close });
+            Controls.AddRange(new Control[] { lblTitle, lblSub, btnAnt, btnSig, tabBajas, tabCabeza, pnlKills, pnlWins, lblPrev, lblMsg, close });
             Ui.Modernize(this, 32, Bg, Color.FromArgb(17, 18, 23), Fg, Muted, Text, false);
             Shown += delegate { LoadStats(); };
+        }
+
+        Button Tab(string text, int x)
+        {
+            var b = new RoundButton { Text = text, Location = new Point(x, 78), Size = new Size(305, 30), FlatStyle = FlatStyle.Flat, BackColor = Panel, ForeColor = Fg, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            b.FlatAppearance.BorderSize = 0;
+            return b;
         }
 
         Button SmallButton(string text, int x, int y)
@@ -139,9 +155,25 @@ namespace CoDUOKit
             var m = Month(ym);
             lblTitle.Text = "TOP " + MonthName(ym).ToUpper();
             int partidas = m != null && m.ContainsKey("partidas") ? Convert.ToInt32(m["partidas"]) : 0;
-            lblSub.Text = partidas + " partidas jugadas en el servidor" + (actualizado != "" ? "   -   actualizado " + actualizado : "");
-            pnlKills.SetData(Ranking(m, "bajas"));
-            pnlWins.SetData(Ranking(m, "ganadas"));
+            lblSub.Text = partidas + " partidas jugadas en los servidores" + (actualizado != "" ? "   -   actualizado " + actualizado : "");
+            // pestana elegida: dorada; la otra, apagada
+            tabBajas.BackColor = verCabeza ? Panel : Color.FromArgb(70, 60, 25); tabBajas.ForeColor = verCabeza ? Muted : Gold;
+            tabCabeza.BackColor = verCabeza ? Color.FromArgb(70, 60, 25) : Panel; tabCabeza.ForeColor = verCabeza ? Gold : Muted;
+            lblMsg.Text = verCabeza ? TextoCabeza : TextoBajas;
+            if (verCabeza)
+            {
+                pnlKills.SetTitle("M\u00C1S TIROS A LA CABEZA (DIO)");
+                pnlWins.SetTitle("M\u00C1S TIROS EN LA CABEZA (RECIBI\u00D3)");
+                pnlKills.SetData(Ranking(m, "cabeza"));
+                pnlWins.SetData(Ranking(m, "cabeza_recibidos"));
+            }
+            else
+            {
+                pnlKills.SetTitle("M\u00C1S BAJAS");
+                pnlWins.SetTitle("M\u00C1S PARTIDAS GANADAS");
+                pnlKills.SetData(Ranking(m, "bajas"));
+                pnlWins.SetData(Ranking(m, "ganadas"));
+            }
             btnAnt.Enabled = idx > 0;
             btnSig.Enabled = idx < orden.Count - 1;
 
@@ -162,7 +194,8 @@ namespace CoDUOKit
         // Tabla dibujada a mano: puesto, nombre con los colores del juego (^1 rojo...), numero
         class RankPanel : Panel
         {
-            readonly string title, unit, me;
+            string title;
+            readonly string unit, me;
             List<KeyValuePair<string, int>> rows = new List<KeyValuePair<string, int>>();
             static readonly Color[] Cod = {
                 Color.FromArgb(120, 120, 120), Color.FromArgb(255, 80, 80), Color.FromArgb(90, 220, 90), Color.FromArgb(255, 230, 80),
@@ -179,6 +212,7 @@ namespace CoDUOKit
             public static string Strip(string s) { return System.Text.RegularExpressions.Regex.Replace(s ?? "", @"\^.", ""); }
 
             public void SetData(List<KeyValuePair<string, int>> r) { rows = r; Invalidate(); }
+            public void SetTitle(string t) { title = t; Invalidate(); }
 
             protected override void OnPaint(PaintEventArgs e)
             {
@@ -191,7 +225,7 @@ namespace CoDUOKit
                     TextRenderer.DrawText(g, title, tf, new Rectangle(0, 8, Width, 22), Gold, TextFormatFlags.HorizontalCenter);
                     if (rows.Count == 0)
                     {
-                        TextRenderer.DrawText(g, "Todavia nadie este mes", nf, new Rectangle(0, 60, Width, 22), Muted, TextFormatFlags.HorizontalCenter);
+                        TextRenderer.DrawText(g, "Todav\u00EDa nadie este mes", nf, new Rectangle(0, 60, Width, 22), Muted, TextFormatFlags.HorizontalCenter);
                         return;
                     }
                     int y = 40;

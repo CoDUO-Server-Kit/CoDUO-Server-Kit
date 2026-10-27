@@ -65,7 +65,7 @@ TIPO = {"asalto": "Fusil de asalto", "compactas": "Arma compacta", "tirador": "A
 # del motor (G_ModelIndex: overflow, probado 18-10-2026). Otros disponibles: us_shadow_co_assault, sas_recon,
 # spetsnaz_engineer, spetsnaz_smg, spetsnaz_merc, militia_smg, bandits_smg, inner_circle_assault.
 SOLDADOS = {
-    "american": ["delta_assault", "us_army_assault"],
+    "american": ["delta_assault", "spetsnaz_merc"],    # us_army_assault se veia muy blanco (cambiado 20-10-2026)
     "british": ["sas_assault", "sas_specops"],
     "russian": ["spetsnaz_assault", "spetsnaz_airborne"],
     "german": ["militia_assault", "bandits_assault"],
@@ -357,6 +357,15 @@ NUEVO = {}
 # de esta arma del mod (la M4: todo en 0). Se aplica a todas las armas de Hardline del menu y sus modos alternativos;
 # no a las de las rachas (llevan "fijos"). REFERENCIA_SIN_RETROCESO = None deja el retroceso original de Hardline.
 REFERENCIA_SIN_RETROCESO = "svt40_mp"
+
+# Ajustes de balance por arma de Hardline (reemplazan el valor de su archivo; el menu de armas los muestra).
+# Cuentas con la vida del servidor (kit_player_health 150) y el multiplicador por zona del juego
+# (info/mp_lochit_dmgtable: cabeza 1.5, pecho 0.9, panza 0.8, brazos y piernas 0.4 a 0.6).
+AJUSTES = {
+    # Ballesta: 1 flecha en la cabeza (110 x 1.5 = 165) y 2 en el cuerpo (pecho 99, panza 88).
+    # minDamagePercent 100 = no pierde dano con la distancia (si no, de lejos la cabeza no mataria de una).
+    "svt40_mp": {"damage": "110", "minDamagePercent": "100"},
+}
 _SIN_RETROCESO = None
 
 
@@ -1340,9 +1349,10 @@ harrier_destino(inicio, z)
 
 # ------------------------------------------------------------------ menus
 def datos_arma(w, tipo):
-    """Texto del panel de la derecha, sacado del archivo del arma de Hardline."""
+    """Texto del panel de la derecha, sacado del archivo del arma de Hardline (con los AJUSTES de abajo)."""
     t = hl.leer("weapons/mp/" + w).decode("latin-1").split("\\")
     kv = dict(zip(t[1::2], t[2::2]))
+    kv.update(AJUSTES.get(w, {}))
     partes = [tipo + "."]
     if kv.get("damage"):
         partes.append("Daño: %s" % kv["damage"])
@@ -1538,7 +1548,7 @@ def main():
     a = ap.parse_args()
     print("1) armas")
     for w, _ in ARMAS:
-        arma(w)
+        arma(w, cambios=AJUSTES.get(w))
     print("  %d armas hl_* (%d elegibles + modos alternativos)" % (len(NUEVO), len(ARMAS)))
     nombres_rachas = rachas()            # antes de los sonidos: suma alias hl_* al csv
     print("2) sonidos")
@@ -1556,6 +1566,8 @@ def main():
     scripts()
     print("5) menus")
     menus()
+    print("6) arreglos")
+    arreglos()
     destino = os.path.join(a.salida, SALIDA_PK3)
     os.makedirs(a.salida, exist_ok=True)
     with zipfile.ZipFile(destino, "w", zipfile.ZIP_DEFLATED) as z:
@@ -1565,6 +1577,33 @@ def main():
     print("\nOK %s: %d archivos, %.1f MB" % (destino, len(salida), tam / 1048576))
     for x in avisos:
         print("  AVISO:", x)
+
+
+def arreglos():
+    """Vidrios de las miras (22-10-2026): la G-28 y la IA-2 usan texturas "glass_blend_in2@...", un tipo de material que
+    no existe en el juego -> el motor las dibujaba opacas (gris). Se agrega shadertypes/model/glass_blend_in2.stype
+    (igual al glass_blend_in del juego: vidrio transparente) y se ponen las texturas de Instalador\\hardline_arreglos\\skins
+    (las del scopefix que paso un jugador, mas transparentes)."""
+    base = tf.leer("shadertypes/model/glass_blend_in.stype")
+    if base is None:
+        raise SystemExit("no encuentro shadertypes/model/glass_blend_in.stype en el juego")
+    salida["shadertypes/model/glass_blend_in2.stype"] = base
+    carpeta = os.path.join(ROOT, "hardline_arreglos", "skins")
+    for f in sorted(glob.glob(os.path.join(carpeta, "*"))):
+        r = "skins/" + os.path.basename(f)
+        if not os.path.basename(f).lower().endswith((".dds", ".tga", ".jpg")):
+            continue
+        if r not in salida:
+            avisos.append("arreglo sin uso (ninguna arma usa %s)" % r)
+        salida[r] = open(f, "rb").read()
+        print("  " + r)
+    # otros tipos de material que no existen (quedan opacos): solo se avisa
+    tipos = {k[len("shadertypes/model/"):-len(".stype")] for k in salida if k.startswith("shadertypes/model/")}
+    for k in sorted(salida):
+        if k.startswith("skins/") and "@" in k:
+            t = k[6:].split("@")[0].lower()
+            if t not in tipos and not existe_fuera("shadertypes/model/" + t + ".stype"):
+                avisos.append("el material %s no existe en el juego (se ve opaco): %s" % (t, k))
 
 
 if __name__ == "__main__":

@@ -94,8 +94,38 @@ foreach ($f in $files) {
     $subidos++
 }
 
+# 3b) EDITOR DE MAPAS (opcional): va aparte, en un zip con su propia lista firmada (manifest_editor.json). Solo lo baja
+# el launcher de quien instalo el editor; los demas (y los launchers viejos) ni lo ven. Se arma con Armar_Editor.ps1.
+$zipEd = Join-Path $root 'editor_paquete\EditorMapas.zip'
+$ultimoEd = Join-Path $privado 'ultimo_manifest_editor.json'
+$manEd = $null
+if (Test-Path $zipEd) {
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $z = [IO.Compression.ZipFile]::OpenRead($zipEd)
+    $desc = 0; foreach ($e in $z.Entries) { $desc += $e.Length }; $cant = $z.Entries.Count; $z.Dispose()
+    $manEd = [ordered]@{
+        version  = (Get-Date -Format 'yyyy-MM-dd HH:mm')
+        asset    = 'EditorMapas.zip'
+        sha256   = (Get-FileHash $zipEd -Algorithm SHA256).Hash.ToLower()
+        size     = (Get-Item $zipEd).Length
+        unpacked = $desc
+        files    = $cant
+    }
+    $prevEd = $null
+    if ((Test-Path $ultimoEd) -and -not $Forzar) { $prevEd = (Get-Content $ultimoEd -Raw | ConvertFrom-Json).sha256 }
+    if ($assets.ContainsKey('EditorMapas.zip') -and $assets['EditorMapas.zip'].size -eq $manEd.size -and $prevEd -eq $manEd.sha256) {
+        Write-Host "  igual   EditorMapas.zip (editor de mapas)"
+        $manEd.version = (Get-Content $ultimoEd -Raw | ConvertFrom-Json).version
+    } else {
+        Write-Host ("  SUBIENDO EditorMapas.zip (editor de mapas, {0:N1} MB)..." -f ($manEd.size / 1MB))
+        Upload $zipEd 'EditorMapas.zip'
+        $subidos++
+    }
+}
+
 # 4) Borrar del release lo que ya no esta en la carpeta maestra
 $validos = @($files | ForEach-Object { $_.asset }) + 'manifest.json' + 'manifest.sig'
+if ($manEd) { $validos += 'EditorMapas.zip', 'manifest_editor.json', 'manifest_editor.sig' }
 foreach ($name in @($assets.Keys)) {
     if ($validos -notcontains $name) { Write-Host "  BORRANDO del release: $name"; Remove-Asset $name }
 }
@@ -119,6 +149,20 @@ if (Test-Path $clave) {
 }
 Upload $tmp 'manifest.json'
 Copy-Item $tmp $ultimo -Force
+
+# lista del editor (firmada con la misma clave)
+if ($manEd) {
+    $tmpEd = Join-Path $env:TEMP 'manifest_editor.json'
+    [IO.File]::WriteAllText($tmpEd, ($manEd | ConvertTo-Json -Depth 3), (New-Object Text.UTF8Encoding($false)))
+    if (Test-Path $clave) {
+        $sigEd = Join-Path $env:TEMP 'manifest_editor.sig'
+        [IO.File]::WriteAllText($sigEd, [Convert]::ToBase64String($rsa.SignData([IO.File]::ReadAllBytes($tmpEd), 'SHA256')))
+        Upload $sigEd 'manifest_editor.sig'
+    }
+    Upload $tmpEd 'manifest_editor.json'
+    Copy-Item $tmpEd $ultimoEd -Force
+    Write-Host "  editor de mapas: version $($manEd.version)"
+}
 
 Write-Host ""
 Write-Host "LISTO. Version $($manifest.version) publicada. Archivos subidos: $subidos de $($files.Count)." -ForegroundColor Green

@@ -31,6 +31,7 @@ Creado por **Leandro Guzman** en colaboración con un grupo de técnicos aficion
 19. [Compilar y armar cada pieza](#19-compilar-y-armar-cada-pieza)
 20. [Sumar armas, soldados y rachas de otro mod (ejemplo: Hardline)](#20-sumar-armas-soldados-y-rachas-de-otro-mod-ejemplo-hardline)
 21. [Servidor propio en tu casa (Debian Linux, sin panel)](#21-servidor-propio-en-tu-casa-debian-linux-sin-panel)
+22. [Modo carrera de jeeps](#22-modo-carrera-de-jeeps)
 
 ---
 
@@ -757,3 +758,55 @@ Para que el launcher tenga un botón para este servidor sin tocar la PC de nadie
 - Para usarlo desde afuera hay que publicar el panel en internet desde tu casa.
 
 Tiene sentido con varios juegos (por ejemplo CoD UO, CoD 2 y CS 1.6) en una PC de **4 núcleos y 8 a 16 GB** (un Ryzen 3 3200G o una mini PC N100 alcanzan), y varias personas administrando.
+
+## 22. Modo carrera de jeeps
+
+Es un modo de juego nuevo, `carrera`. Todos largan juntos en jeep y gana el primero que completa las vueltas, sin disparos.
+
+![Largada](../imagenes/carrera_largada.jpg)
+
+**Cómo se arma.** `python herramientas\Armar_Carrera.py` arma `maestro\MiMod\zzzzzz_kit_carrera.pk3`. Lo hace con el `dm.gsc` de tu mod (AWE), así conserva sus menús, el fin de mapa y la votación, y le suma la lógica de la carrera. El código del mod se lee en tu PC al armarlo y no viene en este repositorio. El pk3 trae:
+
+- `maps/mp/gametypes/carrera.gsc` y `carrera.txt` (el nombre del modo).
+- El vehículo `vehicles/bt_jeep_carrera`: el jeep del juego con velocidad máxima de unos 120 km/h y aceleración más lenta.
+- Una copia de `maps/mp/_jeepdrive_gmi.gsc` del mod que reconoce ese vehículo.
+
+El pk3 va a los jugadores por el launcher y solo al servidor que tenga pistas. Agregá el modo a la votación como cualquier otro.
+
+**Qué tiene que traer el mapa (la pista):**
+
+| Entidad | Claves | Para qué |
+|---|---|---|
+| `script_vehicle` | `vehicletype` `bt_jeep_carrera`, `targetname` `jeep`, `script_noteworthy` = lugar en la grilla (1, 2...) | Un jeep por jugador, detrás de la meta |
+| `trigger_multiple` | `targetname` `carrera_meta` | La línea de salida y meta (cruza todo el camino) |
+| `trigger_multiple` | `targetname` `carrera_control`, `script_noteworthy` = 1..N | Los controles, en el orden en que hay que pasarlos |
+| `script_origin` | `targetname` `carrera_reaparece`, `script_noteworthy` = 0 (meta) o 1..N | Dónde se reaparece en otro jeep |
+| `mp_deathmatch_spawn` | — | Uno en cada jeep |
+
+En el `.gsc` del mapa:
+- `precacheVehicle("bt_jeep_carrera");`, antes de cualquier `wait`;
+- `maps\mp\_jeepdrive_gmi::main();`;
+- `level.carrera_vueltas = 3;`.
+
+En el `.arena`, agregá `carrera` a los modos del mapa.
+
+**Reglas que costó descubrir:**
+- **Sonido de los vehículos:** UO solo carga los sonidos que lista `soundloadspecs/mp/<mapa>.csv`. Si el mapa no trae esa lista, usa la `default.csv` del mod, que no incluye `gmi_mp_vehicles_*.csv`, y los jeeps quedan sin motor ni bocina. Cada pista tiene que traer la suya.
+- **Vehículo propio:** un tipo de vehículo propio necesita la entrada de carpeta `vehicles/` dentro del pk3. Si falta, el cliente de Windows dice *"Can't find info for script vehicle"*, aunque el servidor Linux ande bien.
+- **Velocidad de un jeep manejado:** el script no la puede cambiar. `origin` se ignora y `setspeed` tira un error de script que cae el servidor, así que no hay turbo.
+- **Sonidos desde el script:** `playsound` sobre un `script_origin` no suena nunca; usá un `script_model`.
+- **Disparadores:** adentro de un vehículo, el jugador "toca" cualquier disparador. Fijate en la posición del jeep, no en `istouching`.
+
+**Variables (cvars):**
+- `scr_carrera_vueltas`: 0 usa las vueltas del mapa.
+- `scr_carrera_largada`: segundos de espera antes de la cuenta regresiva (30).
+- `scr_carrera_cuenta`: largo de la cuenta regresiva (5).
+- `scr_carrera_espera`: segundos que tienen los demás después del ganador (45).
+- `scr_carrera_timelimit`: límite de tiempo en minutos (20).
+- `scr_carrera_minas`: minas en el camino (6).
+- `scr_carrera_dano`: % de vida que pierde el jeep por cada 100 de golpe entre jeeps (4); en 0 explota.
+- `scr_carrera_prueba`: bots que recorren los controles solos, para probar en un servidor aparte.
+
+**En la práctica:** el launcher ofrece el modo *Carrera de jeeps* sin bots, porque los bots no manejan. Se corre solo, contra el reloj.
+
+![Práctica en modo carrera](../imagenes/practica_carrera.png)

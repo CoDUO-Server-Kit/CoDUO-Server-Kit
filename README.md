@@ -30,11 +30,22 @@ Instrucciones completas dentro del zip (`LEEME.txt`). Para montar **tu propio se
 - **Limpieza automática**: respeta los gráficos que elige cada jugador, apaga el *server-cache* del motor HD (copias repetidas de todos los pk3, más de 1 GB) y borra versiones viejas y copias repetidas.
 - **Motor HD opcional**: cambia entre el motor original y un motor alternativo de 64 bits (no incluido), guardando copia de los originales.
 - **Armas modernas de otro mod (ejemplo: eBus Hardline)**: `Armar_Hardline.py` suma a tu mod AWE 27 armas modernas con su pestaña en el menú, soldados modernos y la racha **Harrier** (7 bajas seguidas) reescrita, **sin usar los scripts** del otro mod. Se puede apagar por cvar o por mapa ([guía §20](docs/GUIA.md#20-sumar-armas-soldados-y-rachas-de-otro-mod-ejemplo-hardline)).
+- **Modo nuevo: carrera de jeeps**: todos largan juntos en jeep con cuenta regresiva y gana el primero que completa las vueltas. No se puede disparar. Arriba se ven la vuelta, el puesto, el tiempo, la velocidad y el próximo control. Los controles van en orden, así nadie corta camino. Si te bajás del jeep, te trabás o lo rompés, volvés en otro jeep en el último control que pasaste, y aparecen minas en el camino. Se elige por votación como cualquier modo y también está en la práctica, donde se corre solo contra el reloj. El jeep de carrera llega a 120 km/h, acelera más despacio que el normal y tiene motor y bocina con sonido ([guía §22](docs/GUIA.md#22-modo-carrera-de-jeeps)).
 - **Herramientas**: armado de pk3, auditoría de conflictos entre pk3, publicador de releases y un parche para launchers viejos.
 
 | Top del mes | Práctica con bots |
 |---|---|
 | ![Top](imagenes/top_del_mes.png) | ![Práctica](imagenes/practica.png) |
+
+**Carrera de jeeps**
+
+| Largada (cuenta regresiva) | Corriendo: vuelta, puesto, tiempo, velocidad y próximo control |
+|---|---|
+| ![Largada](imagenes/carrera_largada.jpg) | ![Manejando](imagenes/carrera_manejando.jpg) |
+
+| En la práctica del launcher |
+|---|
+| ![Práctica en modo carrera](imagenes/practica_carrera.png) |
 
 ![Cómo funciona](imagenes/arquitectura.svg)
 
@@ -62,6 +73,7 @@ Todo se hace desde la carpeta del proyecto, en Windows. Los detalles están en l
 | **pk3 de armas** | `python herramientas\Armar_Pk3.py armas` | Tus archivos en `armas_src\weapons\mp\` | `maestro\MiMod\z_zzz_kit_armas.pk3` (servidor y jugadores) |
 | **pk3 de Hardline** (opcional) | `python herramientas\Armar_Hardline.py` (después de `Armar_Pk3.py armas`) | Los 4 pk3 de eBus Hardline en `mods_terceros\` | `maestro\MiMod\z_zzz_kit_hardline.pk3` (servidor y jugadores) |
 | **pk3 de práctica (bots)** | `python herramientas\Armar_Pk3.py practica` | El pk3 de arreglos armado antes + el juego instalado | `maestro\MiMod\zzzzzz_kit_practica.pk3` (solo jugadores) |
+| **pk3 de carrera de jeeps** (opcional) | `python herramientas\Armar_Carrera.py` | El pk3 de tu mod (AWE, con `dm.gsc`) en `maestro\MiMod\` | `maestro\MiMod\zzzzzz_kit_carrera.pk3` (jugadores, y el servidor que tenga pistas) |
 | **Config de la práctica** | `powershell -File herramientas\Generar_Practica_cfg.ps1` | `servidor\MiMod\server.cfg` y `awe.cfg` | `maestro\MiMod\practica.cfg` |
 | **Mapas sin repetir** | `python herramientas\Anular_Arenas_Repetidas.py` (y después `Armar_Pk3.py armas`) | Tu lista general `mp/CoDmaps.arena` en un pk3 de `maestro\MiMod\` | `armas_src\mp\*.arena` vacíos: cada mapa aparece una sola vez |
 | **Auditoría de conflictos** | `python herramientas\Auditar_Conflictos.py` | Los pk3 en `maestro\MiMod\` | Informe (tiene que dar `total: 0`) |
@@ -102,4 +114,4 @@ GPL v3 — ver [LICENSE](LICENSE). Las partes derivadas de otros mods (el script
 
 ## English summary
 
-**CoDUO Server Kit** is a complete toolkit to run a private Call of Duty: United Offensive 1.51 community server with a custom mod: a self-updating launcher (C#, .NET 4, Windows 7+) that syncs your mod from a private GitHub release using a SHA-256 manifest, optionally RSA-signed so only your private key can push updates; a locked-down server (`sv_pure 1`, downloads off); bot practice on any map with bots that build their own navigation graph at load time; a monthly leaderboard updated by GitHub Actions; one-click repair of classic UO issues; an optional HD-engine switch; a tool that adds another mod's content to an AWE-based mod without its scripts (example: 27 modern weapons, modern soldiers and a rewritten Harrier killstreak from eBus Hardline, plus the engine rules we found: max 127 weapon files, Linux needs new weapon names that sort after the stock ones); a guide and an install script to run the server at home on a small **Debian** box (systemd service, nftables firewall with query rate limits, router and hairpin NAT notes); multiple server buttons configured by a signed `servidores.json`; and the publishing tools behind it. Requirements and build steps are in the tables above; the full guide is in Spanish ([docs/GUIA.md](docs/GUIA.md)). Created by **Leandro Guzman** with GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro and Sr-Oscuro, with the help of AI tools. It contains only the kit's own code (GPL v3) — no game files, mods, maps or engine. The ready-to-play package in *Releases* includes third-party content (mod, maps, HD engine, eBus Hardline weapons) with credits.
+**CoDUO Server Kit** is a complete toolkit to run a private Call of Duty: United Offensive 1.51 community server with a custom mod: a self-updating launcher (C#, .NET 4, Windows 7+) that syncs your mod from a private GitHub release using a SHA-256 manifest, optionally RSA-signed so only your private key can push updates; a locked-down server (`sv_pure 1`, downloads off); bot practice on any map with bots that build their own navigation graph at load time; a monthly leaderboard updated by GitHub Actions; one-click repair of classic UO issues; an optional HD-engine switch; a tool that adds another mod's content to an AWE-based mod without its scripts (example: 27 modern weapons, modern soldiers and a rewritten Harrier killstreak from eBus Hardline, plus the engine rules we found: max 127 weapon files, Linux needs new weapon names that sort after the stock ones); a guide and an install script to run the server at home on a small **Debian** box (systemd service, nftables firewall with query rate limits, router and hairpin NAT notes); multiple server buttons configured by a signed `servidores.json`; a new **jeep race** game mode (laps, ordered checkpoints, countdown start, speedometer, respawn at the last checkpoint, mines, no shooting; also in local practice); and the publishing tools behind it. Requirements and build steps are in the tables above; the full guide is in Spanish ([docs/GUIA.md](docs/GUIA.md)). Created by **Leandro Guzman** with GERARD!, Gaston, Miguel Soldier, Guille, Jubilado, Pyro and Sr-Oscuro, with the help of AI tools. It contains only the kit's own code (GPL v3) — no game files, mods, maps or engine. The ready-to-play package in *Releases* includes third-party content (mod, maps, HD engine, eBus Hardline weapons) with credits.

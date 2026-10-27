@@ -1,4 +1,4 @@
-// CoDUOKit Launcher - verifica/actualiza el mod MiMod desde un release privado de GitHub
+﻿// CoDUOKit Launcher - verifica/actualiza el mod MiMod desde un release privado de GitHub
 // y abre Call of Duty: United Offensive con el mod y el nombre del jugador.
 // Compilar con build.bat (.NET Framework 4.8, C# 5).
 using System;
@@ -113,6 +113,7 @@ namespace CoDUOKit
         public static T Read<T>(string file) { return S.Deserialize<T>(File.ReadAllText(file, Encoding.UTF8)); }
         public static T Parse<T>(string text) { return S.Deserialize<T>(text); }
         public static void Write(string file, object o) { File.WriteAllText(file, S.Serialize(o), new UTF8Encoding(false)); }
+        public static string Quote(string s) { return S.Serialize(s); }
     }
 
     class GitHub
@@ -290,6 +291,15 @@ namespace CoDUOKit
                 using (var f = new TopForm(new GitHub(cfg), player != null ? player.name : "")) f.ShowDialog(this);
             };
             Controls.Add(btnTop);
+
+            // EDITOR DE MAPAS (instalacion opcional, Editor.cs)
+            var btnEditor = new RoundButton { Text = "EDITOR DE MAPAS", Location = new Point(308, 6), Size = new Size(154, 30), BackColor = Color.FromArgb(30, 44, 60), ForeColor = Color.FromArgb(140, 200, 255), Font = new Font("Segoe UI", 9f, FontStyle.Bold), Radius = 15, BorderColor = Color.FromArgb(90, 150, 210) };
+            btnEditor.Click += delegate
+            {
+                if (cfg == null || string.IsNullOrEmpty(cfg.owner)) { MessageBox.Show(this, "El editor se instala desde las actualizaciones y este launcher no tiene actualizaciones configuradas.", "Editor de mapas"); return; }
+                using (var f = new EditorForm(cfg, Log)) f.ShowDialog(this);
+            };
+            Controls.Add(btnEditor);
 
             btnPlay.Click += delegate { Play(); };
             btnPractice.Click += delegate { Practice(); };
@@ -491,7 +501,7 @@ namespace CoDUOKit
         // Nombres de nuestros pk3 (versiones viejas que el launcher mueve a _cuarentena al publicar una nueva)
         static readonly string[] PrefijosPropios = { "mimod_", "z_zzz_kit", "zzzzzz_kit" };   // poné aca el comienzo del nombre de TUS pk3
         // Carpetas del juego que nunca se tocan aunque esten vacias
-        static readonly string[] CarpetasDelJuego = { "main", "uo", "miles", "pb", "docs", "uodocs", "_redist", "launcher" };
+        static readonly string[] CarpetasDelJuego = { "main", "uo", "miles", "pb", "docs", "uodocs", "_redist", "launcher", "editormapas" };
 
         // _cuarentena: se borran las versiones viejas NUESTRAS (y las que repiten un archivo vigente).
         // Lo que no es nuestro (algo que puso el jugador) queda ahi.
@@ -871,6 +881,21 @@ namespace CoDUOKit
             LimpiarCuarentena(man);
             LimpiarRepetidosUo(man);
 
+            // editor de mapas: solo si esta instalado, se pone al dia con lo publicado (no frena el resto si falla)
+            if (assets != null && EditorMapas.Instalado)
+            {
+                try
+                {
+                    var me = EditorMapas.Leer(gh, assets, cfg.publicKey);
+                    if (EditorMapas.HaceFaltaActualizar(me))
+                    {
+                        if (EditorMapas.Abierto()) Log("Hay una version nueva del editor de mapas: se instala cuando lo cierres y vuelvas a abrir el launcher.");
+                        else EditorMapas.Instalar(gh, assets, me, cfg.modDir, (t, p) => Status(t, p), Log);
+                    }
+                }
+                catch (Exception ex) { Log("Editor de mapas: no se pudo actualizar (" + ex.Message + ")."); }
+            }
+
             if (toFetch.Count == 0)
             {
                 Status("Todo al dia. Listo para jugar.", 100);
@@ -888,21 +913,44 @@ namespace CoDUOKit
             // 3) Descargar y reemplazar
             long need = 0; foreach (var f in toFetch) need += f.size;
             long got = 0;
+            int fallidos = 0;
+            int[] esperas = { 3, 6, 10 };
             foreach (var f in toFetch)
             {
                 long id;
-                if (!assets.TryGetValue(f.asset, out id)) { Log("ERROR: el release no tiene " + f.asset); continue; }
+                if (!assets.TryGetValue(f.asset, out id)) { Log("ERROR: el release no tiene " + f.asset); fallidos++; continue; }
                 string local = Path.Combine(Paths.GameDir, f.path.Replace('/', '\\'));
                 Directory.CreateDirectory(Path.GetDirectoryName(local));
                 string tmp = local + ".descargando";
                 long baseGot = got;
                 string fname = Path.GetFileName(local);
-                gh.Download(id, tmp, d => Status(string.Format("Descargando {0}  ({1:N0} / {2:N0} MB)", fname, (baseGot + d) / 1048576, need / 1048576), (int)((baseGot + d) * 100 / Math.Max(1, need))));
+                // Un corte de conexion (antivirus, wifi) no frena todo: hasta 4 intentos por archivo y despues sigue con el resto
+                bool bajado = false;
+                for (int intento = 0; intento <= esperas.Length && !bajado; intento++)
+                {
+                    try
+                    {
+                        gh.Download(id, tmp, d => Status(string.Format("Descargando {0}  ({1:N0} / {2:N0} MB)", fname, (baseGot + d) / 1048576, need / 1048576), (int)((baseGot + d) * 100 / Math.Max(1, need))));
+                        bajado = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
+                        if (intento < esperas.Length)
+                        {
+                            Log("Se corto la descarga de " + fname + " (" + ex.Message + "). Reintento en " + esperas[intento] + " s...");
+                            Thread.Sleep(esperas[intento] * 1000);
+                        }
+                        else Log("ERROR: no pude bajar " + f.path + " despues de " + (esperas.Length + 1) + " intentos: " + ex.Message);
+                    }
+                }
+                if (!bajado) { fallidos++; continue; }
                 string h = Sha256(tmp, null);
                 if (!string.Equals(h, f.sha256, StringComparison.OrdinalIgnoreCase))
                 {
                     File.Delete(tmp);
                     Log("ERROR: " + f.path + " se descargo danado, se reintenta en la proxima verificacion.");
+                    fallidos++;
                     continue;
                 }
                 try
@@ -917,7 +965,15 @@ namespace CoDUOKit
                     // un archivo que falla no corta la verificacion del resto
                     Log("ERROR al reemplazar " + f.path + ": " + ex.Message);
                     try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
+                    fallidos++;
                 }
+            }
+            if (fallidos > 0)
+            {
+                Status("Faltan " + fallidos + " archivo(s): toca REPARAR antes de jugar (si no, el servidor te rechaza).", 0);
+                Log("Faltan " + fallidos + " archivo(s). Toca Reparar o volve a abrir el launcher para terminar.");
+                SelfUpdate();
+                return;
             }
             Status("Actualizacion terminada. Listo para jugar.", 100);
             Log("Actualizacion terminada.");
@@ -1042,12 +1098,16 @@ namespace CoDUOKit
                 player.practiceBotsAxis = c.BotsAxis; player.practiceBotsDm = c.BotsDm; player.practiceDifficulty = c.Difficulty;
                 player.practiceAccuracy = c.Accuracy;
                 try { Json.Write(Paths.PlayerFile, player); } catch { }
+                // mapas propios / extra para el menu de la practica dentro del juego
+                try { PracticeForm.EscribirMapasExtra(Paths.GameDir, cfg.modDir); } catch (Exception ex) { Log("No pude escribir practica_mis_mapas.cfg: " + ex.Message); }
                 // Servidor DEDICADO oculto en la PC (solo 127.0.0.1) + el juego conectandose a el.
                 // (Como "servidor + jugador" en un solo proceso, algunos mapas como miniharbor cierran el juego.)
                 // awe_bots_* los usa el _awe_bots.gsc de zzzzzz_kit_practica.pk3
                 string server = "+set dedicated 1 +set net_ip 127.0.0.1 +set net_port " + PracticePort +
-                       " +set fs_game " + cfg.modDir + " +set sv_pure 0 +set logfile 0 +set sv_maxclients " + (c.TotalBots + 4) +
-                       " +exec practica.cfg +set g_gametype " + c.Mode + " +set awe_bots " + c.TotalBots +
+                       // 64 lugares: al cambiar de MODO dentro de la practica los bots viejos quedan ocupando su lugar
+                       // (limite del juego) y entran bots nuevos; con pocos lugares no entraban (ver _kit_practica.gsc)
+                       " +set fs_game " + cfg.modDir + " +set sv_pure 0 +set logfile 0 +set sv_maxclients 64" +
+                       " +exec practica.cfg +exec practica_mis_mapas.cfg +set g_gametype " + c.Mode + " +set awe_bots " + c.TotalBots +
                        " +set awe_bots_allies " + (c.IsTeamMode ? c.BotsAllies : 0) +
                        " +set awe_bots_axis " + (c.IsTeamMode ? c.BotsAxis : 0) +
                        " +set awe_bots_health " + c.BotHealth + " +set awe_bots_skill " + c.Difficulty +
@@ -1106,6 +1166,30 @@ namespace CoDUOKit
         void FixLanguageInCfg(string lang)
         {
             SetCfgCvars(new[] { "cl_language", lang }, true);
+        }
+
+        // Teclas F1 a F6 para la votacion de mapa del servidor (19-10-2026): cada una ejecuta la cvar kit_votoN, que la
+        // manda el servidor. Durante una votacion es el voto; el resto del tiempo F1/F2 votan si/no (como siempre).
+        void TeclasVotacion()
+        {
+            SetCfgCvars(new[] { "kit_voto1", "vote yes", "kit_voto2", "vote no", "kit_voto3", "", "kit_voto4", "", "kit_voto5", "", "kit_voto6", "" }, false);
+            string f = ModCfg;
+            try
+            {
+                if (!File.Exists(f)) return;
+                var lines = new List<string>(File.ReadAllLines(f, Encoding.Default));
+                bool changed = false;
+                for (int n = 1; n <= 6; n++)
+                {
+                    string pre = "bind F" + n + " ", want = pre + "\"vstr kit_voto" + n + "\"";
+                    int idx = lines.FindIndex(l => l.TrimStart().StartsWith(pre, StringComparison.OrdinalIgnoreCase));
+                    if (idx >= 0 && lines[idx].Trim() == want) continue;
+                    if (idx >= 0) lines[idx] = want; else lines.Add(want);
+                    changed = true;
+                }
+                if (changed) { File.WriteAllLines(f, lines.ToArray(), Encoding.Default); Log("Teclas F1 a F6 listas para la votacion de mapa."); }
+            }
+            catch (Exception ex) { Log("No pude configurar las teclas de votacion: " + ex.Message); }
         }
 
         // Escribe "seta <cvar> <valor>" en el uoconfig_mp.cfg del mod (pares cvar, valor)
@@ -1324,7 +1408,12 @@ namespace CoDUOKit
                 Log("Graficos recomendados aplicados (solo esta vez; despues se respeta lo que elijas en el juego).");
             }
             // Contador de FPS del juego (arriba a la derecha)
-            args += " +set cg_drawFPS " + (player.fps == "no" ? "0" : "1");
+            // Contador de FPS chico: el motor HD lo dibuja grande con cg_drawFPSMode 1; con 0 vuelve al estilo clasico.
+            // El medidor de red (cg_lagometer) no se puede achicar ni mover: apagado (19-10-2026).
+            args += " +set cg_drawFPS " + (player.fps == "no" ? "0" : "1") + " +set cg_drawFPSMode 0 +set cg_lagometer 0";
+            // HUD del servidor (tu partida, top, votacion): con motor HD y pantalla ancha va mas a la izquierda (ui_mp/hud_votar.menu)
+            bool ancha = player.width > 0 && player.height > 0 && player.width * 100 / player.height >= 155;
+            args += " +set kit_hd " + (player.motor == "nuevo" && Environment.Is64BitOperatingSystem && ancha ? "1" : "0");
             // Idioma: si el juego detecta otra placa de video aplica la "configuracion optima" y vuelve cl_language
             // a ingles; como solo estan los textos en espanol, aparecen EXE_CONNECTINGTO y similares.
             string lang = GameLanguage();
@@ -1347,7 +1436,8 @@ namespace CoDUOKit
             // Lo que elige el launcher tambien queda en la config del juego (asi coinciden aunque el juego se cierre mal)
             if (player.width > 0 && player.height > 0)
                 SetCfgCvars(new[] { "r_mode", "-1", "r_customwidth", player.width.ToString(), "r_customheight", player.height.ToString(),
-                                    "r_fullscreen", player.display == "ventana" ? "0" : "1", "cg_drawFPS", player.fps == "no" ? "0" : "1", "name", player.name }, false);
+                                    "r_fullscreen", player.display == "ventana" ? "0" : "1", "cg_drawFPS", player.fps == "no" ? "0" : "1", "cg_drawFPSMode", "0", "cg_lagometer", "0", "name", player.name }, false);
+            TeclasVotacion();
             ApplyMotor();
             // Motor mejorado: brillo aplicado dentro del juego (no cambia el brillo del monitor)
             // cl_serverCache 0: sin copias por servidor ni config aparte (ver LimpiarServerCache)

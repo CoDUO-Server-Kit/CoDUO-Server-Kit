@@ -21,23 +21,8 @@ addBotClients()
 	if(level.awe_debug)
 		iprintln(level.awe_allplayers.size + " players found.");
 
-	numbots = 0;
-	// Catch & count running bots and start their think threads.
-	for(i=0;i<level.awe_allplayers.size;i++)
-	{
-		if(isdefined(level.awe_allplayers[i]))
-		{
-			player = level.awe_allplayers[i];
-			if(player.name.size==4 || player.name.size==5)
-			{
-				if(player.name[0] == "b" && player.name[1] == "o" && player.name[2] == "t")
-				{
-					player thread bot_think();
-					numbots++;
-				}
-			}
-		}
-	}
+	// bots que ya estan en la partida (se recuentan en cada vuelta de abajo)
+	numbots = ContarBots(true);
 
 	// Reparto por equipo (se guarda en game[] para que sobreviva a los reinicios de ronda)
 	if(!isdefined(game["kit_bots_init"]))
@@ -102,7 +87,12 @@ addBotClients()
 			}
 		}
 
-		// Any new bots to add?
+		// cambiando de mapa desde el menu de la practica: no agregar bots en este mapa que se esta cerrando
+		if(isdefined(level.kit_practica_cambiando))
+			continue;
+
+		// Any new bots to add? (se recuentan: alguno puede haber vuelto tarde despues de un cambio de mapa)
+		numbots = ContarBots(true);
 		newbots = level.awe_bots - numbots;
 
 		// Any new bots to add?
@@ -125,11 +115,39 @@ addBotClients()
 					bot.kit_team = "axis";
 					game["kit_axis_left"] = game["kit_axis_left"] - 1;
 				}
+				bot.kit_pensando = true;
 				bot thread bot_think();
+			}
+			else if(!isdefined(level.kit_aviso_lleno))
+			{
+				// sin lugar: cada cambio de modo deja los bots viejos ocupando lugares (limite del juego)
+				level.kit_aviso_lleno = true;
+				iprintlnbold("^7No entran mas bots: ^3volve a abrir la practica desde el launcher^7 para tenerlos a todos.");
 			}
 			numbots++;
 		}
 	}
+}
+
+// bots conectados (nombre bot0..bot99); con iniciar = true les arranca el hilo a los que todavia no lo tienen
+ContarBots(iniciar)
+{
+	n = 0;
+	ps = getentarray("player", "classname");
+	for(i = 0; i < ps.size; i++)
+	{
+		nm = ps[i].name;
+		if((nm.size == 4 || nm.size == 5) && nm[0] == "b" && nm[1] == "o" && nm[2] == "t")
+		{
+			n++;
+			if(iniciar && !isdefined(ps[i].kit_pensando))
+			{
+				ps[i].kit_pensando = true;
+				ps[i] thread bot_think();
+			}
+		}
+	}
+	return n;
 }
 
 bot_think()

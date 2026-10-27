@@ -1,10 +1,11 @@
-// Practica local: servidor en la PC del jugador con los mapas/config del server y bots de AWE.
+﻿// Practica local: servidor en la PC del jugador con los mapas/config del server y bots de AWE.
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
@@ -15,6 +16,8 @@ namespace CoDUOKit
         public string Map;        // nombre del .bsp (lo que va en +map)
         public string Name;       // nombre como aparece en el juego
         public List<string> Modes = new List<string>();
+        public bool Oficial;      // esta en la lista del servidor (CoDmaps.arena); si no, es un mapa extra (propio del jugador, etc.)
+        public string Carpeta, Pk3;   // de donde viene el .bsp (la primera carpeta en que aparece: mod, uo, main)
         public override string ToString() { return Name; }
     }
 
@@ -32,7 +35,7 @@ namespace CoDUOKit
         public int Accuracy = 0;        // indice de AccuracyValues (0 = segun la dificultad)
         public static readonly int[] AccuracyValues = { 0, 10, 20, 35, 55, 75 };
         public int AccuracyPercent { get { return AccuracyValues[Math.Max(0, Math.Min(AccuracyValues.Length - 1, Accuracy))]; } }
-        public bool IsTeamMode { get { return Mode != "dm"; } }
+        public bool IsTeamMode { get { return Mode != "dm" && Mode != "carrera"; } }
         public int TotalBots { get { return IsTeamMode ? BotsAllies + BotsAxis : BotsDm; } }
         // vida de los bots: facil 100, normal = la de los jugadores (0), dificil 200
         public int BotHealth { get { return Difficulty == 0 ? 100 : (Difficulty == 2 ? 200 : 0); } }
@@ -46,6 +49,7 @@ namespace CoDUOKit
             new[] { "ctf", "Captura de bandera (CTF)" }, new[] { "bas", "Asalto a la base (BASES)" },
             new[] { "sd", "Busqueda y destruccion (SD)" }, new[] { "hq", "Cuartel general (HQ)" },
             new[] { "bel", "Detras de las lineas (BEL)" }, new[] { "dom", "Dominacion (DOM)" }, new[] { "re", "Recuperacion (RE)" },
+            new[] { "carrera", "Carrera de jeeps" },
         };
 
         static readonly Color Bg = Color.FromArgb(24, 26, 32);
@@ -163,15 +167,17 @@ namespace CoDUOKit
 
         void UpdateBots()
         {
-            bool team = Mode != "dm";
+            bool team = Mode != "dm" && Mode != "carrera";
             lblAllies.Visible = numAllies.Visible = lblAxis.Visible = numAxis.Visible = team;
-            lblDm.Visible = numDm.Visible = !team;
+            lblDm.Visible = numDm.Visible = Mode == "dm";
             UpdateInfo();
         }
 
         void UpdateInfo()
         {
-            if (Mode == "dm")
+            if (Mode == "carrera")
+                lblInfo.Text = "Carrera de jeeps: los bots no manejan, se corre solo (contra el reloj).\nA los pocos segundos largas manejando tu jeep.";
+            else if (Mode == "dm")
                 lblInfo.Text = numDm.Value == 0 ? "Sin bots: para recorrer el mapa solo." : "Todos contra todos: vos y " + numDm.Value + " bots.";
             else
                 lblInfo.Text = "Al entrar elegis tu equipo. Ejemplo: vos solo contra 5 = Aliados 0, Eje 5, y vos entras en Aliados.\n" +
@@ -185,7 +191,7 @@ namespace CoDUOKit
             Choice = new PracticeChoice
             {
                 Map = m.Map, Mode = Mode, BotsAllies = (int)numAllies.Value, BotsAxis = (int)numAxis.Value,
-                BotsDm = (int)numDm.Value, Difficulty = cmbDiff.SelectedIndex < 0 ? 1 : cmbDiff.SelectedIndex,
+                BotsDm = Mode == "carrera" ? 0 : (int)numDm.Value, Difficulty = cmbDiff.SelectedIndex < 0 ? 1 : cmbDiff.SelectedIndex,
                 Accuracy = cmbAcc.SelectedIndex < 0 ? 0 : cmbAcc.SelectedIndex
             };
             if (Choice.TotalBots > 16) { MessageBox.Show(this, "Maximo 16 bots en total."); return; }
@@ -213,11 +219,41 @@ namespace CoDUOKit
             "mp_cove", "nuenen", "mp_uo_ardennes1944", "townville_ctf", "mp_oxkhov", "ctf_nuenen", "ctf_bazolles",
             "lw_brecourt", "lw_damaucamp", "lw_lars_land4", "uo_tigertown_ctf", "mp_uo_frontline3" };
 
+        // Mapas que no estan en la lista oficial (los propios del jugador en uo\, mapas nuevos sin agregar a la lista):
+        // el menu "Cambiar mapa" de la practica dentro del juego tiene una lista fija; estos se le pasan en un .cfg
+        // (kit_mm_<n>_mapa / _modo / _nombre, uno por mapa y modo) y aparecen primero, en celeste
+        public static void EscribirMapasExtra(string gameDir, string modDir)
+        {
+            var sb = new System.Text.StringBuilder("// Lo escribe el launcher al abrir la practica: mapas que no estan en la lista oficial\r\n");
+            int n = 0;
+            try
+            {
+                // los del juego original (pak*.pk3, uomappack, localized) no: no estan en la lista a proposito.
+                // Primero los propios del jugador (uo\), despues los del mod que no estan en la lista oficial
+                var extra = LoadMaps(gameDir, modDir).Where(m => !m.Oficial && !Regex.IsMatch(m.Pk3 ?? "", @"^(pak|uomappack|localized_)", RegexOptions.IgnoreCase))
+                                                      .OrderBy(m => m.Carpeta.Equals("uo", StringComparison.OrdinalIgnoreCase) ? 0 : 1).ToList();
+                foreach (var m in extra)
+                {
+                    foreach (var g in m.Modes)
+                    {
+                        if (n >= 48) break;
+                        n++;
+                        string nom = m.Name.Replace("\"", "").Replace(";", " ");
+                        sb.Append("set kit_mm_" + n + "_mapa \"" + m.Map + "\"\r\nset kit_mm_" + n + "_modo \"" + g + "\"\r\nset kit_mm_" + n + "_nombre \"" + nom + "\"\r\n");
+                    }
+                }
+            }
+            catch { }
+            sb.Append("set kit_mm_" + (n + 1) + "_mapa \"\"\r\n");
+            File.WriteAllText(Path.Combine(gameDir, modDir, "practica_mis_mapas.cfg"), sb.ToString());
+        }
+
         // Lista de mapas = CoDmaps.arena del mod (nombres y modos del server) + .arena de cada mapa,
         // solo los .bsp que existen en la PC
         public static List<MapInfo> LoadMaps(string gameDir, string modDir)
         {
             var bsps = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var origen = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);   // mapa -> { carpeta, pk3 }
             string arena = null;                       // CoDmaps.arena del mod (lista del server)
             var otherArenas = new List<string>();      // .arena propios de cada mapa
             foreach (var dir in new[] { modDir, "uo", "main" })
@@ -236,7 +272,11 @@ namespace CoDUOKit
                             {
                                 string n = e.FullName;
                                 if (n.StartsWith("maps/mp/", StringComparison.OrdinalIgnoreCase) && n.EndsWith(".bsp", StringComparison.OrdinalIgnoreCase))
-                                    bsps.Add(Path.GetFileNameWithoutExtension(n));
+                                {
+                                    string bn = Path.GetFileNameWithoutExtension(n);
+                                    bsps.Add(bn);
+                                    if (!origen.ContainsKey(bn)) origen[bn] = new[] { dir, Path.GetFileName(pk3) };
+                                }
                                 if (n.StartsWith("mp/", StringComparison.OrdinalIgnoreCase) && n.EndsWith(".arena", StringComparison.OrdinalIgnoreCase))
                                 {
                                     string txt;
@@ -253,6 +293,10 @@ namespace CoDUOKit
 
             var list = new List<MapInfo>();
             var all = new List<string>();
+            var oficiales = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (arena != null)
+                foreach (Match b in Regex.Matches(Regex.Replace(arena, @"//[^\n]*", ""), "map\\s+\"([^\"]+)\"", RegexOptions.IgnoreCase))
+                    oficiales.Add(b.Groups[1].Value.Trim());
             if (arena != null) all.Add(arena);
             all.AddRange(otherArenas);
             string clean = Regex.Replace(string.Join("\n", all.ToArray()), @"//[^\n]*", "");
@@ -271,7 +315,8 @@ namespace CoDUOKit
                 string name = ln.Success ? StripColors(ln.Groups[1].Value) : "";
                 if (name.Length == 0 || name.Equals(map, StringComparison.OrdinalIgnoreCase) || name.Equals(StripColors(map), StringComparison.OrdinalIgnoreCase))
                     name = Pretty(map);
-                var info = new MapInfo { Map = map, Name = name };
+                string[] de; origen.TryGetValue(map, out de);
+                var info = new MapInfo { Map = map, Name = name, Oficial = oficiales.Contains(map), Carpeta = de != null ? de[0] : "", Pk3 = de != null ? de[1] : "" };
                 foreach (var g in (gt.Success ? gt.Groups[1].Value : "dm tdm").Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries))
                     if (!info.Modes.Contains(g.ToLowerInvariant())) info.Modes.Add(g.ToLowerInvariant());
                 list.Add(info);
