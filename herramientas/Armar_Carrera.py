@@ -974,6 +974,12 @@ Toca(trig, num)
 		d = ent.origin - r.origin;
 		if(d[0] * d[0] + d[1] * d[1] > radio * radio)
 			return false;
+		// pistas de 2 pisos: el control de abajo no cuenta pasando por arriba (y al reves)
+		if(d[2] * d[2] > 250 * 250)
+			return false;
+		// sentido unico: cruzando la franja para el lado que se corre (de contramano no cuenta)
+		if(isDefined(r.angles) && vectordot(anglestoforward((0, r.angles[1], 0)), anglestoforward((0, ent.angles[1], 0))) < 0)
+			return false;
 	}
 	return ent istouching(trig);
 }

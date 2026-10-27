@@ -52,7 +52,9 @@ CATEGORIAS = [
         ("mp40_mp", "Honey Badger"), ("bar_mp", "G36C SD"), ("gewehr43_mp", "MP7"), ("ppsh_mp", "MP5 SD"),
         ("sten_mp", "UMP-45"), ("sten_silenced_mp", "SC-2010")]),
     ("tirador", "Tirador", [
-        ("springfield_mp", "Intervention"), ("intervention_sniper_mp", "Intervention 2"), ("kar98k_sniper_mp", "IA-2"),
+        # "Intervention 2" (intervention_sniper_mp) sacada el 27-10-2026: despues de cada disparo las tiras de la
+        # ghillie del brazo derecho se deformaban (viene asi de Hardline; issue 2 del repo publico).
+        ("springfield_mp", "Intervention"), ("kar98k_sniper_mp", "IA-2"),
         ("mosin_nagant_sniper_mp", "G-28"), ("svt40_mp", "Ballesta")]),
     ("pesadas", "Pesadas", [
         ("mg34_mp", "PKP Pecheneg"), ("minigun_mp", "Minigun"), ("bazooka_mp", "Bazooka"),

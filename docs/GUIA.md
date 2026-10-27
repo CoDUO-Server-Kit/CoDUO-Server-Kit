@@ -477,7 +477,7 @@ python herramientas\Armar_Hardline.py
 ```
 
 - **Necesita:** el pk3 de armas armado antes (19.4: parte de sus menús de armas) y los 4 pk3 de eBus Hardline en `mods_terceros\` (al lado de `herramientas\`). Opcional: miniaturas en `herramientas\hardline_miniaturas\`.
-- **Genera:** `maestro\MiMod\z_zzz_kit_hardline.pk3` con 27 armas modernas, soldados modernos, la racha Harrier y la pestaña **HARDLINE** en los menús de armas.
+- **Genera:** `maestro\MiMod\z_zzz_kit_hardline.pk3` con 26 armas modernas, soldados modernos, la racha Harrier y la pestaña **HARDLINE** en los menús de armas.
 - **Opciones:** `--juego`, `--mods`, `--maestro` y `--salida` cambian las carpetas sin editar el script.
 - **Después:** subilo al servidor, reiniciá y **leé la consola del servidor Linux** antes de publicar. Todo el detalle en [§20](#20-sumar-armas-soldados-y-rachas-de-otro-mod-ejemplo-hardline).
 
@@ -518,14 +518,16 @@ python estadisticas\poner_secretos.py
 
 ### 20.1 Qué agrega
 
-1. **27 armas de Hardline** + sus modos de disparo alternativos = **32 archivos de armas**, renombrados con el prefijo `zhl_`:
+1. **26 armas de Hardline** + sus modos de disparo alternativos = **31 archivos de armas**, renombrados con el prefijo `zhl_`:
 
    | Categoría | Armas |
    |---|---|
    | Asalto | M4A1, SCAR-H, Steyr AUG, ARX-160, CM-901, ACR, Peacekeeper, FAD, FN2000, FAMAS, SA-80 |
    | Compactas | Honey Badger, G36C SD, MP7, MP5 SD, UMP-45, SC-2010 |
-   | Tirador | Intervention, Intervention 2, IA-2, G-28, Ballesta |
+   | Tirador | Intervention, IA-2, G-28, Ballesta |
    | Pesadas | PKP Pecheneg, Minigun, Bazooka, Panzerfaust, Panzerschreck |
+
+   La **Intervention 2** de Hardline no se incluye: después de cada disparo el brazo con traje ghillie se deforma (viene así del mod original; [issue #2](https://github.com/CoDUO-Server-Kit/CoDUO-Server-Kit/issues/2)).
 
    Los modelos, animaciones, texturas, íconos, efectos y alias de sonido que **chocan** con tu mod o con el juego se renombran (con prefijo `hl_`, o dentro de los modelos binarios con un nombre del mismo largo), así tus armas siguen viéndose y sonando igual. `clipName` y `ammoName` también llevan prefijo. Los alias de sonido se agregan al final del `generic_mp_sound.csv` de tu mod, porque el `soundloadspec` de **todos** los mapas carga ese archivo.
 2. **Menú de armas:** una pestaña **HARDLINE** nueva en los 4 menús de armas de los bandos (en español y por defecto), con 4 categorías (Asalto, Compactas, Tirador, Pesadas), miniaturas en 3 columnas y un panel al costado con **daño, cargador, cadencia y movilidad** (leídos de cada archivo de arma). Para entrar en el presupuesto de ítems del menú, la categoría, el nombre y los datos se muestran con ítems de texto por cvar (`ui_hl_cat`, `ui_hl_nombre`, `ui_hl_datos`): los menús quedan con ~101 ítems (el límite es más alto que 96).
